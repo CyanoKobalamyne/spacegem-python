@@ -10,14 +10,6 @@ from menus import *
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 
-class SceneManager(object):
-    def __init__(self):
-        self.go_to(TitleScene())
-
-    def go_to(self, scene):
-        self.scene = scene
-        self.scene.manager = self
-
 def main():
     pg.init()
     screen = pg.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
@@ -25,7 +17,7 @@ def main():
     timer = pg.time.Clock()
     running = True
 
-    manager = SceneManager()
+    manager = SceneManager(TitleScene())
 
     while running:
         timer.tick(60)

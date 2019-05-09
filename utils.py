@@ -33,3 +33,11 @@ class Scene(object):
 
     def handle_events(self, events):
         raise NotImplementedError
+
+class SceneManager(object):
+    def __init__(self, firstScene):
+        self.go_to(firstScene)
+
+    def go_to(self, scene):
+        self.scene = scene
+        self.scene.manager = self
