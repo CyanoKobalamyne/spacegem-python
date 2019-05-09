@@ -49,14 +49,14 @@ class NotePlatformerScene:
         self.blobs = Group()
 
         platforms = [
-            Platform(position=Vector(0, 50)),
-            Platform(position=Vector(110, 50)),
-            Platform(position=Vector(220, 50)),
+            Platform(position=Vector(0, 700)),
+            Platform(position=Vector(600, 700)),
+            Platform(position=Vector(1200, 700)),
         ]
         enemies = [
-            Enemy(position=Vector(100, 40)),
+            Enemy(position=Vector(1000, 600)),
         ]
-        self.player = Player(position=Vector(40, 40))
+        self.player = Player(position=Vector(200, 600))
 
         for blob in platforms:
             self.blobs.add(blob)
@@ -106,14 +106,14 @@ class Blob(Sprite):
 
 class Platform(Blob):
     def __init__(self, **kwargs):
-        super().__init__(100, 20, 'blue', **kwargs)
+        super().__init__(500, 100, 'blue', **kwargs)
 
 
 class Player(Blob):
     def __init__(self, **kwargs):
-        super().__init__(10, 10, 'green', **kwargs)
-        self.v_run = Vector(20, 0)
-        self.v_jump = Vector(0, -5)
+        super().__init__(100, 100, 'green', **kwargs)
+        self.v_run = Vector(50, 0)
+        self.v_jump = Vector(0, -30)
 
     def go_left(self):
         self.velocity = -self.v_run
@@ -130,14 +130,14 @@ class Player(Blob):
 
 class Enemy(Blob):
     def __init__(self, **kwargs):
-        super().__init__(10, 10, 'red', velocity=Vector(-10, 0), **kwargs)
+        super().__init__(100, 100, 'red', velocity=Vector(-40, 0), **kwargs)
 
 
 def main():
     pygame.init()
 
-    size = [600, 400]
-    screen = pygame.display.set_mode(size)
+    size = [1200, 800]
+    screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
     pygame.display.set_caption('Test platformer')
 
     level = NotePlatformerScene()
