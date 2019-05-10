@@ -4,6 +4,7 @@ import random
 import pickle
 from utils import *
 from interval import *
+import menus
 
 BLACK = (0, 0, 0)
 GREY = (127, 127, 127)
@@ -21,8 +22,6 @@ class SpaceshipScene(Scene):
         self.level = LEVELS[state["level"]]
         if self.state["ships"] == None:
             self.state["ships"] = [True]*len(self.level)
-        if sum(self.state["ships"]) == 0:
-            self.manager.go_to(WinScene())
         self.spaceships = pg.sprite.Group()
         time = self.state["curr_time"] - self.state["start_time"]
         for i in range(len(self.level)):
@@ -32,6 +31,9 @@ class SpaceshipScene(Scene):
         self.bg = pg.image.load("./images/space-background.png")
 
     def render(self, screen):
+        if sum(self.state["ships"]) == 0:
+            self.state["level_progress"][self.state["world"]] = self.state["level"] + 1
+            self.manager.go_to(menus.WinScene(self.state))
         screen.blit(self.bg, (0,0))
         self.spaceships.draw(screen)
 
@@ -39,7 +41,7 @@ class SpaceshipScene(Scene):
         self.spaceships.update()
         lose = [s for s in self.spaceships if s.rect.x < 100]
         if len(lose) > 0:
-            self.manager.go_to(LoseScene())
+            self.manager.go_to(menus.LoseScene(self.state))
 
     def handle_events(self, events):
         for e in events:
