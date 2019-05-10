@@ -5,7 +5,8 @@ import random
 from utils import *
 from interval import *
 from menus import *
- 
+from spaceships import *
+
 # Screen dimensions
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600

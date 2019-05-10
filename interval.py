@@ -1,4 +1,4 @@
-import pygame as pg 
+import pygame as pg
 import random
 from utils import *
 
@@ -11,9 +11,9 @@ GREEN = (0, 204, 0)
 SEMITONE_MAP = [0, 2, 4, 5, 7, 9, 11, 12]
 
 class IntervalScene(Scene):
-    def __init__(self):
+    def __init__(self, signals, state):
         super(IntervalScene, self).__init__()
-       
+
         self.sprites = pg.sprite.Group()
         self.flag = ErrorFlag()
         self.sprites.add(self.flag)
@@ -21,12 +21,16 @@ class IntervalScene(Scene):
         self.gems = pg.sprite.Group()
         for i in range(8):
             self.gems.add(Gem(60 + i*60, 450, i))
-        self.sound.signal = sorted([random.randint(0,7), random.randint(0, 7)])
-        
+        self.signals = signals
+        self.sound.signal = signals[0]
+        self.interval_num = 0
+
+        self.state = state
+
         pg.mixer.init()
         self.channel = pg.mixer.find_channel()
         self.play_notes(self.channel,self.sound.signal)
-        
+
         self.bg = pg.image.load("./images/transmission-background.png")
 
     def render(self, screen):
@@ -44,18 +48,20 @@ class IntervalScene(Scene):
                 pos = pg.mouse.get_pos()
                 gem = [g for g in self.gems if g.rect.collidepoint(pos)]
                 if len(gem) > 0:
-                    #pg.mixer.Sound("./sounds/"+str(gem[0].tone)+".wav").play()
                     self.play_notes(self.channel,[gem[0].tone])
                     correct = self.sound.update_text(gem[0].tone)
                     if correct:
-                        self.sound.signal = sorted([random.randint(0,7), random.randint(0, 7)])
+                        self.interval_num += 1
+                        if self.interval_num < len(self.signals):
+                            self.sound.signal = self.signals[self.interval_num]
+                        else:
+                            self.state["ships"][self.state["ship_num"]] = False
+                            self.state["curr_time"] = pg.time.get_ticks()
+                            from spaceships import SpaceshipScene
+                            self.manager.go_to(SpaceshipScene(self.state))
                         self.play_notes(self.channel,self.sound.signal)
                 elif pg.Rect(160, 340, 190, 38).collidepoint(pos):
                     self.play_notes(self.channel,self.sound.signal)
-    
-    # make this be the method that happens when the user finishes the interval puzzle
-    def exit(self): 
-        pass
 
     #can only take up to 2 notes
     def play_notes(self, channel, notes):
@@ -71,8 +77,8 @@ class SoundDisplay:
 
     def draw_peaks(self, note, signal_number, color, screen):
         peak = SEMITONE_MAP[note]
-        pointlist = [(75+100*signal_number, 320), 
-            (125+100*signal_number, 305-peak*15), 
+        pointlist = [(75+100*signal_number, 320),
+            (125+100*signal_number, 305-peak*15),
             (175+100*signal_number, 320)]
         pg.draw.polygon(screen, color, pointlist, 3)
 
@@ -98,7 +104,7 @@ class SoundDisplay:
         if len(self.notes) > 1:
             self.draw_peaks(self.notes[1], 5.5, RED, screen)
 
-class ErrorFlag(pg.sprite.Sprite): 
+class ErrorFlag(pg.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pg.Surface([76, 76])
