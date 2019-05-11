@@ -46,24 +46,24 @@ GRAVITY = Vector(0, -2)
 class NotePlatformerScene:
     def __init__(self):
         self.platforms = Group()
-        self.enemies = Group()
+        self.gems = Group()
         self.blobs = Group()
 
         platforms = [
             Platform(position=Vector(0, 700)),
             Platform(position=Vector(700, 700)),
         ]
-        enemies = [
-            Enemy(position=Vector(1000, 600), velocity=Vector(-40, 0)),
+        gems = [
+            Gem(position=Vector(1000, 600)),
         ]
         self.player = Player(position=Vector(200, 600))
 
         for blob in platforms:
             self.blobs.add(blob)
             self.platforms.add(blob)
-        for blob in enemies:
+        for blob in gems:
             self.blobs.add(blob)
-            self.enemies.add(blob)
+            self.gems.add(blob)
         self.blobs.add(self.player)
 
     def render(self, screen):
@@ -77,12 +77,6 @@ class NotePlatformerScene:
         for platform in pygame.sprite.spritecollide(
                 self.player, self.platforms, False):
             self.player.collide_vertical(platform)
-
-        # Vertical enemy-platform collisions.
-        for enemy, platforms in pygame.sprite.groupcollide(
-                self.enemies, self.platforms, False, False).items():
-            for platform in platforms:
-                enemy.collide_vertical(platform)
 
     def handle_events(self, events):
         for event in events:
@@ -165,7 +159,7 @@ class Player(FallingBlob):
         self.velocity = Vector(self.velocity.x, 0)
 
 
-class Enemy(FallingBlob):
+class Gem(Blob):
     def __init__(self, **kwargs):
         super().__init__(width=100, height=100, color='red', **kwargs)
 
