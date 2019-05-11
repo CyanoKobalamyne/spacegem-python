@@ -11,9 +11,6 @@ from pygame import Color, Surface
 from pygame.sprite import Group, Sprite
 
 
-FPS = 60
-
-
 class Vector(namedtuple('Vector', ['x', 'y'])):
     def __neg__(self):
         return Vector(-self.x, -self.y)
@@ -42,6 +39,10 @@ class Vector(namedtuple('Vector', ['x', 'y'])):
         return self.__mul__(1 / other)
 
 
+FPS = 60
+GRAVITY = Vector(0, -2)
+
+
 class NotePlatformerScene:
     def __init__(self):
         self.platforms = Group()
@@ -50,11 +51,10 @@ class NotePlatformerScene:
 
         platforms = [
             Platform(position=Vector(0, 700)),
-            Platform(position=Vector(600, 700)),
-            Platform(position=Vector(1200, 700)),
+            Platform(position=Vector(700, 700)),
         ]
         enemies = [
-            Enemy(position=Vector(1000, 600)),
+            Enemy(position=Vector(1000, 600), velocity=Vector(-40, 0)),
         ]
         self.player = Player(position=Vector(200, 600))
 
@@ -73,9 +73,19 @@ class NotePlatformerScene:
     def update(self):
         self.blobs.update()
 
+        # Vertical player-platform collisions.
+        for platform in pygame.sprite.spritecollide(
+                self.player, self.platforms, False):
+            self.player.collide_vertical(platform)
+
+        # Vertical enemy-platform collisions.
+        for enemy, platforms in pygame.sprite.groupcollide(
+                self.enemies, self.platforms, False, False).items():
+            for platform in platforms:
+                enemy.collide_vertical(platform)
+
     def handle_events(self, events):
         for event in events:
-            print(event)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     self.player.go_left()
@@ -83,54 +93,81 @@ class NotePlatformerScene:
                     self.player.go_right()
                 if event.key == pygame.K_UP:
                     self.player.jump()
- 
+
             if event.type == pygame.KEYUP:
-                if event.key in {pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP}:
-                    self.player.stop()
+                if event.key in {pygame.K_LEFT, pygame.K_RIGHT}:
+                    self.player.stop_horizontal()
+                if event.key in {pygame.K_UP}:
+                    self.player.stop_vertical()
 
 
 class Blob(Sprite):
     def __init__(self, width, height, color, position, velocity=Vector(0, 0)):
         super().__init__()
-        self.image = Surface((width, height))
-        self.image.fill(Color(color))
-        self.rect = self.image.get_rect()
+        self.width = width
+        self.height = height
         self.position = position
         self.velocity = velocity
 
-    def update(self):
-        self.position += self.velocity / FPS
+        self.image = Surface((width, height))
+        self.image.fill(Color(color))
+        self.rect = self.image.get_rect()
+
+    def _normalize(self):
         pos_diff = self.position - Vector(self.rect.x, self.rect.y)
         self.rect.move_ip(*pos_diff)
+
+    def update(self):
+        self.position += self.velocity / FPS
+        self._normalize()
+
+    def collide_vertical(self, other):
+        if self.velocity.y >= 0:
+            dy = other.position.y - (self.position.y + self.height)
+        else:
+            dy = self.position.y - (other.position.y + other.height)
+
+        self.velocity = Vector(self.velocity.x, 0)
+        self.position += Vector(0, dy)
+        self._normalize()
+
+
+class FallingBlob(Blob):
+    def update(self):
+        self.velocity -= GRAVITY
+        super().update()
 
 
 class Platform(Blob):
     def __init__(self, **kwargs):
-        super().__init__(500, 100, 'blue', **kwargs)
+        super().__init__(width=500, height=100, color='blue', **kwargs)
 
 
-class Player(Blob):
+class Player(FallingBlob):
     def __init__(self, **kwargs):
-        super().__init__(100, 100, 'green', **kwargs)
-        self.v_run = Vector(50, 0)
-        self.v_jump = Vector(0, -30)
+        super().__init__(width=100, height=100, color='green', **kwargs)
+        self.v_run = 50
+        self.v_jump = -200
 
     def go_left(self):
-        self.velocity = -self.v_run
+        self.velocity = Vector(-self.v_run, self.velocity.y)
 
     def go_right(self):
-        self.velocity = self.v_run
+        self.velocity = Vector(self.v_run, self.velocity.y)
 
     def jump(self):
-        self.velocity = self.v_jump
+        self.velocity = Vector(self.velocity.x, self.v_jump)
 
-    def stop(self):
-        self.velocity = Vector(0, 0)
+    def stop_horizontal(self):
+        self.velocity = Vector(0, self.velocity.y)
+
+    def stop_vertical(self):
+        self.velocity = Vector(self.velocity.x, 0)
 
 
-class Enemy(Blob):
+class Enemy(FallingBlob):
     def __init__(self, **kwargs):
-        super().__init__(100, 100, 'red', velocity=Vector(-40, 0), **kwargs)
+        super().__init__(width=100, height=100, color='red', **kwargs)
 
 
 def main():
