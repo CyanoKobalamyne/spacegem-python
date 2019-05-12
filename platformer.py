@@ -1,7 +1,4 @@
 """Platformer scene for Level 1."""
-from collections import namedtuple
-from numbers import Number
-
 import pygame
 import pygame.display
 import pygame.event
@@ -12,9 +9,7 @@ from pygame.sprite import Group, Sprite
 
 from utils import Vector
 
-
-FPS = 60
-GRAVITY = Vector(0, -2)
+from setup import PlatformerSettings as PS
 
 
 class NotePlatformerScene:
@@ -103,7 +98,7 @@ class Blob(Sprite):
         self.rect.move_ip(*pos_diff)
 
     def update(self):
-        self.position += self.velocity / FPS
+        self.position += self.velocity / PS.FPS
         self._normalize()
 
     def collide(self, other):
@@ -133,7 +128,7 @@ class Blob(Sprite):
 
 class FallingBlob(Blob):
     def update(self):
-        self.velocity -= GRAVITY
+        self.velocity += PS.GRAVITY
         super().update()
 
 
@@ -189,7 +184,7 @@ def main():
         level.handle_events(events)
         level.update()
         level.render(screen)
-        clock.tick(FPS)
+        clock.tick(PS.FPS)
         pygame.display.flip()
 
     pygame.quit()
