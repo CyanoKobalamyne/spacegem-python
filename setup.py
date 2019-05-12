@@ -12,5 +12,5 @@ class PlatformerSettings(GameSettings):
     BLOB_SIZE = 100
     GRAVITY = Vector(0, 2)
     RUN_SPEED = 50
-    JUMP_SPEED = 200
+    JUMP_SPEED = 100
     SOUND_RADIUS = 150

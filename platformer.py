@@ -89,9 +89,7 @@ class NotePlatformerScene(Scene):
 
             if event.type == pygame.KEYUP:
                 if event.key in {pygame.K_LEFT, pygame.K_RIGHT}:
-                    self.player.stop_horizontal()
-                if event.key in {pygame.K_UP}:
-                    self.player.stop_vertical()
+                    self.player.stop()
 
     def render(self, screen):
         screen.fill(Color('white'))
@@ -191,11 +189,8 @@ class Player(FallingBlob):
     def jump(self):
         self.velocity = Vector(self.velocity.x, -Settings.JUMP_SPEED)
 
-    def stop_horizontal(self):
+    def stop(self):
         self.velocity = Vector(0, self.velocity.y)
-
-    def stop_vertical(self):
-        self.velocity = Vector(self.velocity.x, 0)
 
 
 class Gem(Blob):
