@@ -21,6 +21,9 @@ class Vector(namedtuple('Vector', ['x', 'y'])):
     def __neg__(self):
         return Vector(-self.x, -self.y)
 
+    def __abs__(self):
+        return (self.x**2 + self.y**2)**0.5
+
     def __add__(self, other):
         if not isinstance(other, Vector):
             raise TypeError(f"{other} is not a vector")

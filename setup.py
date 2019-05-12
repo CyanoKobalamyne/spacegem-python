@@ -13,3 +13,4 @@ class PlatformerSettings(GameSettings):
     GRAVITY = Vector(0, 2)
     RUN_SPEED = 50
     JUMP_SPEED = 200
+    SOUND_RADIUS = 150

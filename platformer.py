@@ -2,6 +2,7 @@
 import pygame
 import pygame.display
 import pygame.event
+import pygame.mixer
 import pygame.sprite
 import pygame.time
 from pygame import Color, Surface
@@ -19,21 +20,23 @@ class NotePlatformerScene(Scene):
 
         platforms = [
             Platform(position=Vector(
-                0, Settings.SCREEN_HEIGHT - Settings.BLOB_SIZE)),
+                    0, Settings.SCREEN_HEIGHT - Settings.BLOB_SIZE)),
             Platform(position=Vector(
-                Settings.SCREEN_WIDTH / 2 + Settings.BLOB_SIZE * 1.5,
-                Settings.SCREEN_HEIGHT - Settings.BLOB_SIZE)),
+                    Settings.SCREEN_WIDTH / 2 + Settings.BLOB_SIZE * 1.5,
+                    Settings.SCREEN_HEIGHT - Settings.BLOB_SIZE)),
         ]
         gems = [
             Gem(position=Vector(
-                0, Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE)),
+                    0, Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE),
+                note=2),
             Gem(position=Vector(
-                Settings.SCREEN_WIDTH - 2 * Settings.BLOB_SIZE,
-                Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE),
+                    Settings.SCREEN_WIDTH - 2 * Settings.BLOB_SIZE,
+                    Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE),
+                note=0,
                 winner=True),
         ]
         self.player = Player(position=Vector(
-            2 * Settings.BLOB_SIZE,
+            3 * Settings.BLOB_SIZE,
             Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE))
 
         for blob in platforms:
@@ -44,6 +47,8 @@ class NotePlatformerScene(Scene):
             self.gems.add(blob)
         self.blobs.add(self.player)
 
+        self.channels = {}
+
     def update(self):
         self.blobs.update()
 
@@ -52,13 +57,17 @@ class NotePlatformerScene(Scene):
                 self.player, self.platforms, False):
             self.player.collide(platform)
 
+        # Handle collisions with gems.
         for gem in pygame.sprite.spritecollide(
                 self.player, self.gems, False):
             if gem.winner:
                 print("WIN!")
             else:
                 print("Lose :(")
-            raise RuntimeError
+            raise SystemExit
+
+        # Play sound near gems.
+        self._play_gem_sounds()
 
     def handle_events(self, events):
         for event in events:
@@ -88,6 +97,23 @@ class NotePlatformerScene(Scene):
         screen.fill(Color('white'))
         self.blobs.draw(screen)
 
+    def _play_gem_sounds(self):
+        for gem in self.gems:
+            distance = (abs(self.player.center - gem.center)
+                        - Settings.BLOB_SIZE)
+            if distance <= Settings.SOUND_RADIUS:
+                vol_ratio = 1 - distance / Settings.SOUND_RADIUS
+                if gem not in self.channels:
+                    channel = pygame.mixer.find_channel()
+                    if channel is None:
+                        raise RuntimeError("no free audio channel found")
+                    self.channels[gem] = channel
+                    channel.play(gem.sound, loops=-1)
+                self.channels[gem].set_volume(vol_ratio)
+            elif gem in self.channels:
+                self.channels[gem].stop()
+                del self.channels[gem]
+
 
 class Blob(Sprite):
     def __init__(self, width, height, color, position, velocity=Vector(0, 0)):
@@ -101,9 +127,13 @@ class Blob(Sprite):
         self.image.fill(Color(color))
         self.rect = self.image.get_rect()
 
+        self._normalize()
+
     def _normalize(self):
         pos_diff = self.position - Vector(self.rect.x, self.rect.y)
         self.rect.move_ip(*pos_diff)
+        diagonal = Vector(self.width, self.height)
+        self.center = self.position + diagonal / 2
 
     def update(self):
         self.position += self.velocity / Settings.FPS
@@ -136,9 +166,7 @@ class Blob(Sprite):
 
 class FallingBlob(Blob):
     def update(self):
-        print("Before:", self.velocity)
         self.velocity += Settings.GRAVITY
-        print("After:", self.velocity)
         super().update()
 
 
@@ -171,11 +199,15 @@ class Player(FallingBlob):
 
 
 class Gem(Blob):
-    def __init__(self, winner=False, **kwargs):
-        self.winner = winner
+    def __init__(self, note, winner=False, **kwargs):
         color = 'green' if winner else 'red'
         super().__init__(width=Settings.BLOB_SIZE, height=Settings.BLOB_SIZE,
                          color=color, **kwargs)
+        self.winner = winner
+
+        # Get sound for this note.
+        sound_path = f"./sounds/{note}.wav"
+        self.sound = pygame.mixer.Sound(sound_path)
 
 
 def main():
