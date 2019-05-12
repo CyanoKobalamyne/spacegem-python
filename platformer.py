@@ -2,7 +2,9 @@
 import pygame
 import pygame.display
 import pygame.event
+import pygame.font
 import pygame.mixer
+import pygame.mouse
 import pygame.sprite
 import pygame.time
 from pygame import Color, Surface
@@ -49,7 +51,13 @@ class NotePlatformerScene(Scene):
 
         self.channels = {}
 
+        self.welcome = WelcomeText()
+        self.at_welcome = True
+
     def update(self):
+        if self.at_welcome:
+            return
+
         self.blobs.update()
 
         # Handle player-platform collisions.
@@ -67,10 +75,26 @@ class NotePlatformerScene(Scene):
             raise SystemExit
 
         # Play sound near gems.
-        self._play_gem_sounds()
+        for gem in self.gems:
+            distance = (abs(self.player.center - gem.center)
+                        - Settings.BLOB_SIZE)
+            if distance <= Settings.SOUND_RADIUS:
+                vol_ratio = 1 - distance / Settings.SOUND_RADIUS
+                self._play_gem_sound(gem, vol_ratio)
+            else:
+                self._stop_gem_sound(gem)
 
     def handle_events(self, events):
         for event in events:
+            if self.at_welcome:
+                if event.type == pygame.MOUSEBUTTONUP:
+                    pos = pygame.mouse.get_pos()
+                    if self.welcome.rect.collidepoint(pos):
+                        self._play_goal_sound()
+                    else:
+                        self.at_welcome = False
+                continue
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     self.player.go_left()
@@ -92,25 +116,32 @@ class NotePlatformerScene(Scene):
                     self.player.stop()
 
     def render(self, screen):
-        screen.fill(Color('white'))
+        screen.fill(Settings.BG_COLOR)
         self.blobs.draw(screen)
+        if self.at_welcome:
+            self.welcome.draw(screen)
 
-    def _play_gem_sounds(self):
-        for gem in self.gems:
-            distance = (abs(self.player.center - gem.center)
-                        - Settings.BLOB_SIZE)
-            if distance <= Settings.SOUND_RADIUS:
-                vol_ratio = 1 - distance / Settings.SOUND_RADIUS
-                if gem not in self.channels:
-                    channel = pygame.mixer.find_channel()
-                    if channel is None:
-                        raise RuntimeError("no free audio channel found")
-                    self.channels[gem] = channel
-                    channel.play(gem.sound, loops=-1)
-                self.channels[gem].set_volume(vol_ratio)
-            elif gem in self.channels:
-                self.channels[gem].stop()
-                del self.channels[gem]
+    def _play_goal_sound(self):
+        winning_gems = (gem for gem in self.gems if gem.winner)
+        try:
+            gem = next(winning_gems)
+        except StopIteration:
+            raise RuntimeError("no winning gem")
+        self._play_gem_sound(gem, 1, loop=False)
+
+    def _play_gem_sound(self, gem, volume, loop=True):
+        if gem not in self.channels or self.channels[gem].get_sound() is None:
+            channel = pygame.mixer.find_channel()
+            if channel is None:
+                raise RuntimeError("no free audio channel found")
+            self.channels[gem] = channel
+            channel.play(gem.sound, loops=-1 if loop else 0)
+        self.channels[gem].set_volume(volume)
+
+    def _stop_gem_sound(self, gem):
+        if gem in self.channels:
+            self.channels[gem].stop()
+            del self.channels[gem]
 
 
 class Blob(Sprite):
@@ -198,11 +229,33 @@ class Gem(Blob):
         color = 'green' if winner else 'red'
         super().__init__(width=Settings.BLOB_SIZE, height=Settings.BLOB_SIZE,
                          color=color, **kwargs)
+        self.note = note
         self.winner = winner
 
         # Get sound for this note.
         sound_path = f"./sounds/{note}.wav"
         self.sound = pygame.mixer.Sound(sound_path)
+
+
+class WelcomeText:
+    def __init__(self):
+        font = pygame.font.SysFont(Settings.FONT_FACE, Settings.FONT_SIZE)
+        text = "Objective: find the gem with this sound (click to play)"
+        text_image = font.render(text, True, Settings.TEXT_COLOR)
+        margin = Settings.TEXT_MARGIN
+        size = Vector(*text_image.get_size())
+        size += 2 * margin
+        self.image = Surface(size)
+        self.image.fill(Settings.TEXT_BG_COLOR)
+        self.image.blit(text_image, margin)
+        self.rect = self.image.get_rect()
+
+    def draw(self, screen):
+        offset = Vector(*screen.get_size()) / 2
+        offset -= Vector(*self.image.get_size()) / 2
+        screen.blit(self.image, offset)
+        self.rect = self.image.get_rect()
+        self.rect.move_ip(*offset)
 
 
 def main():
