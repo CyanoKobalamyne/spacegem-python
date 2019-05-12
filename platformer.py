@@ -86,7 +86,15 @@ class NotePlatformerScene:
                 if event.key == pygame.K_RIGHT:
                     self.player.go_right()
                 if event.key == pygame.K_UP:
-                    self.player.jump()
+                    # Check if there are platforms underneath.
+                    self.player.position += Vector(0, 2)
+                    self.player._normalize()
+                    can_jump = len(pygame.sprite.spritecollide(
+                        self.player, self.platforms, False)) > 0
+                    self.player.position -= Vector(0, 2)
+                    self.player._normalize()
+                    if can_jump:
+                        self.player.jump()
 
             if event.type == pygame.KEYUP:
                 if event.key in {pygame.K_LEFT, pygame.K_RIGHT}:
