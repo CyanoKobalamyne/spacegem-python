@@ -10,12 +10,14 @@ import pygame.time
 from pygame import Color, Surface
 from pygame.sprite import Group, Sprite
 
+import menus
 from setup import PlatformerSettings as Settings
 from utils import Scene, Vector
 
 
 class NotePlatformerScene(Scene):
-    def __init__(self):
+    def __init__(self, state):
+        self.state = state
         self.platforms = Group()
         self.gems = Group()
         self.blobs = Group()
@@ -69,10 +71,9 @@ class NotePlatformerScene(Scene):
         for gem in pygame.sprite.spritecollide(
                 self.player, self.gems, False):
             if gem.winner:
-                print("WIN!")
+                self.manager.go_to(menus.WinScene(self.state))
             else:
-                print("Lose :(")
-            raise SystemExit
+                self.manager.go_to(menus.LoseScene(self.state))
 
         # Play sound near gems.
         for gem in self.gems:
