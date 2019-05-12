@@ -5,6 +5,7 @@ import random
 from utils import *
 from interval import *
 from menus import *
+from spaceships import *
 from setup import GameSettings as Settings
 
 
