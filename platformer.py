@@ -73,10 +73,10 @@ class NotePlatformerScene:
     def update(self):
         self.blobs.update()
 
-        # Vertical player-platform collisions.
+        # Handle player-platform collisions.
         for platform in pygame.sprite.spritecollide(
                 self.player, self.platforms, False):
-            self.player.collide_vertical(platform)
+            self.player.collide(platform)
 
     def handle_events(self, events):
         for event in events:
@@ -115,14 +115,29 @@ class Blob(Sprite):
         self.position += self.velocity / FPS
         self._normalize()
 
-    def collide_vertical(self, other):
-        if self.velocity.y >= 0:
-            dy = other.position.y - (self.position.y + self.height)
+    def collide(self, other):
+        if self.velocity.x > 0:
+            dx = other.position.x - (self.position.x + self.width)
+        elif self.velocity.x < 0:
+            dx = (other.position.x + other.width) - self.position.x
         else:
-            dy = self.position.y - (other.position.y + other.height)
+            dx = 0
 
-        self.velocity = Vector(self.velocity.x, 0)
-        self.position += Vector(0, dy)
+        if self.velocity.y > 0:
+            dy = other.position.y - (self.position.y + self.height)
+        elif self.velocity.y < 0:
+            dy = self.position.y - (other.position.y + other.height)
+        else:
+            dy = 0
+
+        print(dx, dy)
+        if dy == 0 or abs(dx) <= abs(dy):
+            self.velocity = Vector(0, self.velocity.y)
+            self.position += Vector(dx, 0)
+        if dx == 0 or abs(dy) <= abs(dx):
+            self.velocity = Vector(self.velocity.x, 0)
+            self.position += Vector(0, dy)
+
         self._normalize()
 
 
