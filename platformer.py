@@ -51,7 +51,7 @@ class NotePlatformerScene:
 
         platforms = [
             Platform(position=Vector(0, 700)),
-            Platform(position=Vector(700, 700)),
+            Platform(position=Vector(650, 700)),
         ]
         gems = [
             Gem(position=Vector(0, 600)),
@@ -147,7 +147,6 @@ class Blob(Sprite):
         else:
             dy = 0
 
-        print(dx, dy)
         if dy == 0 or abs(dx) <= abs(dy):
             self.velocity = Vector(0, self.velocity.y)
             self.position += Vector(dx, 0)
@@ -202,7 +201,7 @@ def main():
     pygame.init()
 
     size = [1200, 800]
-    screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
+    screen = pygame.display.set_mode(size)
     pygame.display.set_caption('Test platformer')
 
     level = NotePlatformerScene()
