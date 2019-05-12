@@ -1,3 +1,6 @@
+from collections import namedtuple
+from numbers import Number
+
 import pygame as pg
 
 RED = (255, 0, 0)
@@ -41,3 +44,31 @@ class SceneManager(object):
     def go_to(self, scene):
         self.scene = scene
         self.scene.manager = self
+
+
+class Vector(namedtuple('Vector', ['x', 'y'])):
+    def __neg__(self):
+        return Vector(-self.x, -self.y)
+
+    def __add__(self, other):
+        if not isinstance(other, Vector):
+            raise TypeError(f"{other} is not a vector")
+
+        x = self.x + other.x
+        y = self.y + other.y
+        return Vector(x, y)
+
+    def __sub__(self, other):
+        return self.__add__(-other)
+
+    def __mul__(self, other):
+        if isinstance(other, Number):
+            return Vector(other * self.x, other * self.y)
+        else:
+            raise TypeError(f"can't multiply vector by {type(other)}")
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        return self.__mul__(1 / other)
