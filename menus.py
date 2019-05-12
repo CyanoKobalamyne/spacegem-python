@@ -19,7 +19,6 @@ class TitleScene(Scene):
         text2 = self.sfont.render('Click anywhere to begin', True, (255, 255, 255))
         screen.blit(text1, (200, 50))
         screen.blit(text2, (200, 350))
-        screen.blit(text3, (200, 400))
 
     def update(self):
         pass
