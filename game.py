@@ -6,14 +6,22 @@ from utils import *
 from interval import *
 from menus import *
 from spaceships import *
+from setup import GameSettings as Settings
 
-# Screen dimensions
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+
+class SceneManager(object):
+    def __init__(self, firstScene):
+        self.go_to(firstScene)
+
+    def go_to(self, scene):
+        self.scene = scene
+        self.scene.manager = self
+
 
 def main():
     pg.init()
-    screen = pg.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
+    screen = pg.display.set_mode(
+        [Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT])
     pg.display.set_caption('Test')
     timer = pg.time.Clock()
     running = True
@@ -21,7 +29,7 @@ def main():
     manager = SceneManager(TitleScene())
 
     while running:
-        timer.tick(60)
+        timer.tick(Settings.FPS)
 
         if pg.event.get(QUIT):
             running = False
