@@ -54,7 +54,8 @@ class NotePlatformerScene:
             Platform(position=Vector(700, 700)),
         ]
         gems = [
-            Gem(position=Vector(1000, 600)),
+            Gem(position=Vector(0, 600)),
+            Gem(position=Vector(1000, 600), winner=True),
         ]
         self.player = Player(position=Vector(200, 600))
 
@@ -77,6 +78,14 @@ class NotePlatformerScene:
         for platform in pygame.sprite.spritecollide(
                 self.player, self.platforms, False):
             self.player.collide(platform)
+
+        for gem in pygame.sprite.spritecollide(
+                self.player, self.gems, False):
+            if gem.winner:
+                print("WIN!")
+            else:
+                print("Lose :(")
+            raise RuntimeError
 
     def handle_events(self, events):
         for event in events:
@@ -162,7 +171,7 @@ class Platform(Blob):
 
 class Player(FallingBlob):
     def __init__(self, **kwargs):
-        super().__init__(width=100, height=100, color='green', **kwargs)
+        super().__init__(width=100, height=100, color='black', **kwargs)
         self.v_run = 50
         self.v_jump = -200
 
@@ -183,8 +192,10 @@ class Player(FallingBlob):
 
 
 class Gem(Blob):
-    def __init__(self, **kwargs):
-        super().__init__(width=100, height=100, color='red', **kwargs)
+    def __init__(self, winner=False, **kwargs):
+        self.winner = winner
+        color = 'green' if winner else 'red'
+        super().__init__(width=100, height=100, color=color, **kwargs)
 
 
 def main():
