@@ -27,6 +27,9 @@ class TitleScene(Scene):
         for e in events:
             if e.type == MOUSEBUTTONUP:
                 self.manager.go_to(LevelsScene(self.state))
+            if e.type == KEYDOWN:
+                if e.key == K_0:
+                    self.state["level_progress"] = self.state["num_levels"]
 
 class LevelsScene(Scene):
 
@@ -160,24 +163,11 @@ class TransitionScene(Scene):
 
 class WinScene(TransitionScene):
     def __init__(self, state):
-        super(WinScene, self).__init__('You\'ve won this level', (50, 200, 50), state)
+        super(WinScene, self).__init__('You\'ve won this level', (50, 100, 50), state)
 
 class LoseScene(TransitionScene):
     def __init__(self, state):
-        super(LoseScene, self).__init__('You\'ve lost this level', (200, 50, 50), state)
-
-class BackButton():
-    def __init__(self):
-        self.font = pg.font.SysFont('Monospace', 30)
-        self.image = pg.Surface([100, 50])
-        self.rect = self.image.get_rect()
-        self.rect.y = 50
-        self.rect.x = 50
-
-    def draw(self, screen):
-        pg.draw.rect(screen, (255,255,255), self.rect, 3)
-        text = self.font.render("Back", True, (255, 255, 255))
-        screen.blit(text, (60,55))
+        super(LoseScene, self).__init__('You\'ve lost this level', (120, 30, 30), state)
 
 class LevelSquare(pg.sprite.Sprite):
     def __init__(self, x, y, level, available):

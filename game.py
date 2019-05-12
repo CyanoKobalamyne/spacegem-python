@@ -21,7 +21,7 @@ def main():
     manager = SceneManager(TitleScene())
 
     while running:
-        timer.tick(60)
+        timer.tick(24)
 
         if pg.event.get(QUIT):
             running = False
