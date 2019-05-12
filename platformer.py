@@ -7,26 +7,34 @@ import pygame.time
 from pygame import Color, Surface
 from pygame.sprite import Group, Sprite
 
-from utils import Vector
+from setup import PlatformerSettings as Settings
+from utils import Scene, Vector
 
-from setup import PlatformerSettings as PS
 
-
-class NotePlatformerScene:
+class NotePlatformerScene(Scene):
     def __init__(self):
         self.platforms = Group()
         self.gems = Group()
         self.blobs = Group()
 
         platforms = [
-            Platform(position=Vector(0, 700)),
-            Platform(position=Vector(650, 700)),
+            Platform(position=Vector(
+                0, Settings.SCREEN_HEIGHT - Settings.BLOB_SIZE)),
+            Platform(position=Vector(
+                Settings.SCREEN_WIDTH / 2 + Settings.BLOB_SIZE * 1.5,
+                Settings.SCREEN_HEIGHT - Settings.BLOB_SIZE)),
         ]
         gems = [
-            Gem(position=Vector(0, 600)),
-            Gem(position=Vector(1000, 600), winner=True),
+            Gem(position=Vector(
+                0, Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE)),
+            Gem(position=Vector(
+                Settings.SCREEN_WIDTH - 2 * Settings.BLOB_SIZE,
+                Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE),
+                winner=True),
         ]
-        self.player = Player(position=Vector(200, 600))
+        self.player = Player(position=Vector(
+            2 * Settings.BLOB_SIZE,
+            Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE))
 
         for blob in platforms:
             self.blobs.add(blob)
@@ -35,10 +43,6 @@ class NotePlatformerScene:
             self.blobs.add(blob)
             self.gems.add(blob)
         self.blobs.add(self.player)
-
-    def render(self, screen):
-        screen.fill(Color('white'))
-        self.blobs.draw(screen)
 
     def update(self):
         self.blobs.update()
@@ -80,6 +84,10 @@ class NotePlatformerScene:
                 if event.key in {pygame.K_UP}:
                     self.player.stop_vertical()
 
+    def render(self, screen):
+        screen.fill(Color('white'))
+        self.blobs.draw(screen)
+
 
 class Blob(Sprite):
     def __init__(self, width, height, color, position, velocity=Vector(0, 0)):
@@ -98,7 +106,7 @@ class Blob(Sprite):
         self.rect.move_ip(*pos_diff)
 
     def update(self):
-        self.position += self.velocity / PS.FPS
+        self.position += self.velocity / Settings.FPS
         self._normalize()
 
     def collide(self, other):
@@ -128,29 +136,32 @@ class Blob(Sprite):
 
 class FallingBlob(Blob):
     def update(self):
-        self.velocity += PS.GRAVITY
+        print("Before:", self.velocity)
+        self.velocity += Settings.GRAVITY
+        print("After:", self.velocity)
         super().update()
 
 
 class Platform(Blob):
     def __init__(self, **kwargs):
-        super().__init__(width=500, height=100, color='blue', **kwargs)
+        super().__init__(width=Settings.SCREEN_WIDTH / 2,
+                         height=Settings.BLOB_SIZE,
+                         color='blue', **kwargs)
 
 
 class Player(FallingBlob):
     def __init__(self, **kwargs):
-        super().__init__(width=100, height=100, color='black', **kwargs)
-        self.v_run = 50
-        self.v_jump = -200
+        super().__init__(width=Settings.BLOB_SIZE, height=Settings.BLOB_SIZE,
+                         color='black', **kwargs)
 
     def go_left(self):
-        self.velocity = Vector(-self.v_run, self.velocity.y)
+        self.velocity = Vector(-Settings.RUN_SPEED, self.velocity.y)
 
     def go_right(self):
-        self.velocity = Vector(self.v_run, self.velocity.y)
+        self.velocity = Vector(Settings.RUN_SPEED, self.velocity.y)
 
     def jump(self):
-        self.velocity = Vector(self.velocity.x, self.v_jump)
+        self.velocity = Vector(self.velocity.x, -Settings.JUMP_SPEED)
 
     def stop_horizontal(self):
         self.velocity = Vector(0, self.velocity.y)
@@ -163,13 +174,14 @@ class Gem(Blob):
     def __init__(self, winner=False, **kwargs):
         self.winner = winner
         color = 'green' if winner else 'red'
-        super().__init__(width=100, height=100, color=color, **kwargs)
+        super().__init__(width=Settings.BLOB_SIZE, height=Settings.BLOB_SIZE,
+                         color=color, **kwargs)
 
 
 def main():
     pygame.init()
 
-    size = [1200, 800]
+    size = (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT)
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption('Test platformer')
 
@@ -184,7 +196,7 @@ def main():
         level.handle_events(events)
         level.update()
         level.render(screen)
-        clock.tick(PS.FPS)
+        clock.tick(Settings.FPS)
         pygame.display.flip()
 
     pygame.quit()
