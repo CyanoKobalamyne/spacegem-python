@@ -2,6 +2,7 @@ import pygame as pg
 from pygame.locals import *
 from utils import *
 from interval import *
+from platformer import NotePlatformerScene
 
 class TitleScene(Scene):
 
@@ -14,14 +15,20 @@ class TitleScene(Scene):
         # ugly! 
         screen.fill((0, 200, 0))
         text1 = self.font.render('Crazy Game', True, (255, 255, 255))
-        text2 = self.sfont.render('> press space to start <', True, (255, 255, 255))
+        text2 = self.sfont.render('Press 1 to learn notes', True, (255, 255, 255))
+        text3 = self.sfont.render('Press 2 to learn intervals', True, (255, 255, 255))
         screen.blit(text1, (200, 50))
         screen.blit(text2, (200, 350))
+        screen.blit(text3, (200, 400))
 
     def update(self):
         pass
 
     def handle_events(self, events):
         for e in events:
-            if e.type == KEYDOWN and e.key == K_SPACE:
-                self.manager.go_to(IntervalScene()) # can input something to init for which intervals
+            if e.type == KEYDOWN:
+                if e.key == K_1:
+                    # can input something to init for which intervals
+                    self.manager.go_to(IntervalScene())
+                elif e.key == K_2:
+                    self.manager.go_to(NotePlatformerScene())
