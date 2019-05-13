@@ -258,7 +258,7 @@ def main():
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption('Test platformer')
 
-    level = NotePlatformerScene()
+    level = NotePlatformerScene({"level": 0})
     clock = pygame.time.Clock()
 
     while True:
