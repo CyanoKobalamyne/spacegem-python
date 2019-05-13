@@ -46,22 +46,31 @@ class LevelsScene(Scene):
             if e.type == MOUSEBUTTONUP:
                 pos = pg.mouse.get_pos()
                 if pg.Rect(50, 490, 200, 50).collidepoint(pos):
-                    self.manager.go_to(NotePlatformerScene(self.state))
+                    self.manager.go_to(World1Scene(self.state))
                 elif pg.Rect(300, 490, 200, 50).collidepoint(pos):
                     self.manager.go_to(World2Scene(self.state))
                 elif pg.Rect(550, 490, 200, 50).collidepoint(pos):
                     self.manager.go_to(World3Scene(self.state))
 
-class World1Scene(Scene):
 
+class World1Scene(Scene):
     def __init__(self, state):
         self.state = state
-        self.font = pg.font.SysFont('Monospace', 56)
+        self.font = pg.font.SysFont('Monospace', 70)
+        self.back = BackButton()
+        self.levelsquares = pg.sprite.Group()
+        for i in range(self.state["num_levels"][1]):
+            available = (i <= self.state["level_progress"][1])
+            self.levelsquares.add(LevelSquare(50+150*i, 300, i, available))
 
     def render(self, screen):
         screen.fill((0, 0, 0))
-        text1 = self.font.render('Unimplemented', True, (255, 255, 255))
-        screen.blit(text1, (200, 50))
+        pg.draw.rect(screen, (255, 255, 255), Rect(250, 100, 300, 100), 5)
+        text = self.font.render("Levels", True, (255, 255, 255))
+        screen.blit(text, (275, 110))
+        self.back.draw(screen)
+        for ls in self.levelsquares:
+            ls.draw(screen)
 
     def update(self):
         pass
@@ -69,7 +78,15 @@ class World1Scene(Scene):
     def handle_events(self, events):
         for e in events:
             if e.type == MOUSEBUTTONUP:
-                self.manager.go_to(LevelsScene(self.state))
+                pos = pg.mouse.get_pos()
+                lvl = [l for l in self.levelsquares if l.rect.collidepoint(pos)]
+                if len(lvl) > 0 and lvl[0].available:
+                    level_state = {"world": 1,
+                                   "level": lvl[0].level}
+                    state = {**self.state, **level_state}
+                    self.manager.go_to(NotePlatformerScene(state))
+                elif self.back.rect.collidepoint(pos):
+                    self.manager.go_to(LevelsScene(self.state))
 
 class World2Scene(Scene):
 

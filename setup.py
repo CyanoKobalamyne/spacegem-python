@@ -13,6 +13,7 @@ class GameSettings:
 class PlatformerSettings(GameSettings):
     BG_COLOR = Color('white')
     BLOB_SIZE = 100
+    PLATFORM_HEIGHT = 100
     GRAVITY = Vector(0, 2)
     RUN_SPEED = 50
     JUMP_SPEED = 100
