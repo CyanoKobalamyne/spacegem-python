@@ -89,24 +89,21 @@ class NotePlatformerScene(Scene):
                 continue
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
+                if event.key in PS.LEFT_KEYS:
                     self.player.go_left()
-                if event.key == pygame.K_RIGHT:
+                elif event.key in PS.RIGHT_KEYS:
                     self.player.go_right()
-                if event.key == pygame.K_UP:
-                    # Check if there are platforms underneath.
-                    self.player.position += Vector(0, 2) / PS.PPU
-                    self.player._normalize()
-                    can_jump = len(pygame.sprite.spritecollide(
-                        self.player, self.platforms, False)) > 0
-                    self.player.position -= Vector(0, 2) / PS.PPU
-                    self.player._normalize()
-                    if can_jump:
+                elif event.key in PS.JUMP_KEYS:
+                    if self.player.can_jump(self.platforms):
                         self.player.jump()
 
             if event.type == pygame.KEYUP:
-                if event.key in {pygame.K_LEFT, pygame.K_RIGHT}:
-                    self.player.stop()
+                if event.key in PS.LEFT_KEYS:
+                    self.player.stop_left()
+                elif event.key in PS.RIGHT_KEYS:
+                    self.player.stop_right()
+                elif event.key in PS.JUMP_KEYS:
+                    self.player.stop_jump()
 
     def render(self, screen):
         screen.fill(PS.BG_COLOR)
@@ -191,21 +188,32 @@ class Blob(Sprite):
         self._normalize()
 
 
-class FallingBlob(Blob):
-    def update(self):
-        self.velocity += PS.GRAVITY
-        super().update()
-
-
 class Platform(Blob):
     def __init__(self, **kwargs):
         super().__init__(color='blue', **kwargs)
 
 
-class Player(FallingBlob):
+class Player(Blob):
     def __init__(self, **kwargs):
         super().__init__(width=PS.BLOB_SIZE, height=PS.BLOB_SIZE,
                          color='black', **kwargs)
+        self.jump_frames = 0
+
+    def update(self):
+        if self.jump_frames > 0:
+            self.jump_frames -= 1
+        else:
+            self.velocity += PS.GRAVITY
+        super().update()
+
+    def can_jump(self, platforms):
+        self.position += Vector(0, 2) / PS.PPU
+        self._normalize()
+        n_platforms = len(pygame.sprite.spritecollide(
+            self, platforms, False))
+        self.position -= Vector(0, 2) / PS.PPU
+        self._normalize()
+        return n_platforms > 0
 
     def go_left(self):
         self.velocity = Vector(-PS.RUN_SPEED, self.velocity.y)
@@ -215,9 +223,18 @@ class Player(FallingBlob):
 
     def jump(self):
         self.velocity = Vector(self.velocity.x, -PS.JUMP_SPEED)
+        self.jump_frames = PS.JUMP_TIME * GS.FPS
 
-    def stop(self):
-        self.velocity = Vector(0, self.velocity.y)
+    def stop_left(self):
+        if self.velocity.x < 0:
+            self.velocity = Vector(0, self.velocity.y)
+
+    def stop_right(self):
+        if self.velocity.x > 0:
+            self.velocity = Vector(0, self.velocity.y)
+
+    def stop_jump(self):
+        self.jump_frames = 0
 
 
 class Gem(Blob):

@@ -1,4 +1,5 @@
 """Settings for the Space Gem game."""
+import pygame
 from pygame import Color
 
 from utils import Vector
@@ -25,3 +26,7 @@ class PlatformerSettings:
     TEXT_MARGIN = Vector(10, 5)
     TEXT_BG_COLOR = Color('lightblue')
     SCROLL_MARGIN = 1
+    JUMP_TIME = 1
+    LEFT_KEYS = {pygame.K_LEFT, pygame.K_a}
+    RIGHT_KEYS = {pygame.K_RIGHT, pygame.K_d}
+    JUMP_KEYS = {pygame.K_UP, pygame.K_w, pygame.K_SPACE}
