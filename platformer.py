@@ -54,14 +54,6 @@ class NotePlatformerScene(Scene):
                 self.player, self.platforms, False):
             self.player.collide(platform)
 
-        # Handle collisions with gems.
-        for gem in pygame.sprite.spritecollide(
-                self.player, self.gems, False):
-            if gem.winner:
-                self.manager.go_to(menus.WinScene(self.state))
-            else:
-                self.manager.go_to(menus.LoseScene(self.state))
-
         # Play sound near gems.
         for gem in self.gems:
             distance = (abs(self.player.center - gem.center)
@@ -71,6 +63,17 @@ class NotePlatformerScene(Scene):
                 self._play_gem_sound(gem, vol_ratio)
             else:
                 self._stop_gem_sound(gem)
+
+        # Handle collisions with gems.
+        for gem in pygame.sprite.spritecollide(
+                self.player, self.gems, False):
+            # End condition.
+            if gem.winner:
+                self.manager.go_to(menus.WinScene(self.state))
+            else:
+                self.manager.go_to(menus.LoseScene(self.state))
+            # Turn off sound.
+            self._stop_all_sounds()
 
     def handle_events(self, events):
         for event in events:
@@ -130,6 +133,10 @@ class NotePlatformerScene(Scene):
         if gem in self.channels:
             self.channels[gem].stop()
             del self.channels[gem]
+
+    def _stop_all_sounds(self):
+        for channel in self.channels.values():
+            channel.stop()
 
 
 class Blob(Sprite):
