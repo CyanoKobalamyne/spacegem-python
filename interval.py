@@ -1,6 +1,7 @@
 import pygame as pg
 import random
 from utils import *
+import menus
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -34,7 +35,7 @@ class Gem(pg.sprite.Sprite):
 
 
 class IntervalScene(Scene):
-    def __init__(self, signals, state):
+    def __init__(self, signals, lose_time, state):
         super(IntervalScene, self).__init__()
 
         self.sprites = pg.sprite.Group()
@@ -48,6 +49,7 @@ class IntervalScene(Scene):
         self.sound.signal = signals[0]
         self.interval_num = 0
 
+        self.lose_time = lose_time
         self.state = state
 
         pg.mixer.init()
@@ -57,6 +59,9 @@ class IntervalScene(Scene):
         self.bg = pg.image.load("./images/transmission-background.png")
 
     def render(self, screen):
+        print(self.lose_time, pg.time.get_ticks(), self.state["curr_time"])
+        if pg.time.get_ticks() - self.state["curr_time"] > self.lose_time:
+            self.manager.go_to(menus.LoseScene(self.state))
         screen.blit(self.bg, (0,0))
         self.gems.draw(screen)
         self.sound.draw(screen)

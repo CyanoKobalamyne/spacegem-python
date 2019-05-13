@@ -46,3 +46,17 @@ class Vector(namedtuple('Vector', ['x', 'y'])):
 
     def __truediv__(self, other):
         return self.__mul__(1 / other)
+
+class BackButton():
+    def __init__(self):
+        self.font = pg.font.SysFont('Monospace', 30)
+        self.image = pg.Surface([100, 50])
+        self.rect = self.image.get_rect()
+        self.rect.y = 50
+        self.rect.x = 50
+
+    def draw(self, screen):
+        pg.draw.rect(screen, (255,255,255), self.rect, 3)
+        text = self.font.render("Back", True, (255, 255, 255))
+        screen.blit(text, (60,55))
+
