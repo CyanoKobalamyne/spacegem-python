@@ -4,7 +4,8 @@ from numbers import Number
 
 import pygame.draw
 import pygame.font
-from pygame import Surface
+from pygame import Rect, Surface
+from pygame.sprite import Group
 
 
 class Scene(ABC):
@@ -64,3 +65,29 @@ class BackButton():
         pygame.draw.rect(screen, (255, 255, 255), self.rect, 3)
         text = self.font.render("Back", True, (255, 255, 255))
         screen.blit(text, (60, 55))
+
+
+class HorizontalScrollingGroup(Group):
+    def __init__(self, target, screen_size, world_size, margin, *sprites):
+        super().__init__(*sprites)
+        self.target = target
+        self.margin = margin
+        self.world_size = world_size
+        self.camera = Rect(0, 0, *screen_size)
+
+        self.add(target)
+
+    def update(self, *args):
+        super().update(*args)
+        if self.target.rect.left < self.camera.left + self.margin:
+            self.camera.left = max(0, self.target.rect.left - self.margin)
+        elif self.camera.right - self.margin < self.target.rect.right:
+            self.camera.right = min(self.target.rect.right + self.margin,
+                                    self.world_size[0])
+
+    def draw(self, surface):
+        sprites = self.sprites()
+        for spr in sprites:
+            new_rect = spr.rect.move(-Vector(*self.camera.topleft))
+            self.spritedict[spr] = surface.blit(spr.image, new_rect)
+        self.lostsprites = []

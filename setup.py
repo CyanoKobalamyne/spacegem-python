@@ -24,3 +24,4 @@ class PlatformerSettings:
     TEXT_COLOR = Color('black')
     TEXT_MARGIN = Vector(10, 5)
     TEXT_BG_COLOR = Color('lightblue')
+    SCROLL_MARGIN = 1

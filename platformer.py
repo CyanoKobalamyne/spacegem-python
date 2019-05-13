@@ -12,18 +12,23 @@ from pygame.sprite import Group, Sprite
 import menus
 from setup import GameSettings as GS
 from setup import PlatformerSettings as PS
-from utils import Scene, Vector
+from utils import HorizontalScrollingGroup, Scene, Vector
 from worlds import World_1
 
 
 class NotePlatformerScene(Scene):
     def __init__(self, state):
+        level = getattr(World_1, f"Level_{state['level'] + 1}")
+
         self.state = state
+        self.player = Player(position=Vector(*level.player))
+
         self.platforms = Group()
         self.gems = Group()
-        self.blobs = Group()
-
-        level = getattr(World_1, f"Level_{self.state['level'] + 1}")
+        level_width = PS.PPU * max(map(lambda p: p[0] + p[2], level.platforms))
+        self.blobs = HorizontalScrollingGroup(
+            self.player, (GS.SCREEN_WIDTH, GS.SCREEN_HEIGHT),
+            (level_width, GS.SCREEN_HEIGHT), PS.SCROLL_MARGIN * PS.PPU)
 
         for x, y, width, height in level.platforms:
             platform = Platform(width=width, height=height,
@@ -34,8 +39,6 @@ class NotePlatformerScene(Scene):
             gem = Gem(note, winner=winner, position=Vector(x, y))
             self.blobs.add(gem)
             self.gems.add(gem)
-        self.player = Player(position=Vector(*level.player))
-        self.blobs.add(self.player)
 
         self.channels = {}
 
