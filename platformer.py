@@ -10,7 +10,8 @@ from pygame import Color, Surface
 from pygame.sprite import Group, Sprite
 
 import menus
-from setup import PlatformerSettings as Settings
+from setup import GameSettings as GS
+from setup import PlatformerSettings as PS
 from utils import Scene, Vector
 from worlds import World_1
 
@@ -21,9 +22,6 @@ class NotePlatformerScene(Scene):
         self.platforms = Group()
         self.gems = Group()
         self.blobs = Group()
-        self.player = Player(position=Vector(
-            3 * Settings.BLOB_SIZE,
-            Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE))
 
         level = getattr(World_1, f"Level_{self.state['level'] + 1}")
 
@@ -36,6 +34,7 @@ class NotePlatformerScene(Scene):
             gem = Gem(note, winner=winner, position=Vector(x, y))
             self.blobs.add(gem)
             self.gems.add(gem)
+        self.player = Player(position=Vector(*level.player))
         self.blobs.add(self.player)
 
         self.channels = {}
@@ -57,9 +56,9 @@ class NotePlatformerScene(Scene):
         # Play sound near gems.
         for gem in self.gems:
             distance = (abs(self.player.center - gem.center)
-                        - Settings.BLOB_SIZE)
-            if distance <= Settings.SOUND_RADIUS:
-                vol_ratio = 1 - distance / Settings.SOUND_RADIUS
+                        - PS.BLOB_SIZE)
+            if distance <= PS.SOUND_RADIUS:
+                vol_ratio = 1 - distance / PS.SOUND_RADIUS
                 self._play_gem_sound(gem, vol_ratio)
             else:
                 self._stop_gem_sound(gem)
@@ -93,11 +92,11 @@ class NotePlatformerScene(Scene):
                     self.player.go_right()
                 if event.key == pygame.K_UP:
                     # Check if there are platforms underneath.
-                    self.player.position += Vector(0, 2)
+                    self.player.position += Vector(0, 2) / PS.PPU
                     self.player._normalize()
                     can_jump = len(pygame.sprite.spritecollide(
                         self.player, self.platforms, False)) > 0
-                    self.player.position -= Vector(0, 2)
+                    self.player.position -= Vector(0, 2) / PS.PPU
                     self.player._normalize()
                     if can_jump:
                         self.player.jump()
@@ -107,7 +106,7 @@ class NotePlatformerScene(Scene):
                     self.player.stop()
 
     def render(self, screen):
-        screen.fill(Settings.BG_COLOR)
+        screen.fill(PS.BG_COLOR)
         self.blobs.draw(screen)
         if self.at_welcome:
             self.welcome.draw(screen)
@@ -147,20 +146,21 @@ class Blob(Sprite):
         self.position = position
         self.velocity = velocity
 
-        self.image = Surface((width, height))
+        self.image = Surface((width * PS.PPU, height * PS.PPU))
         self.image.fill(Color(color))
         self.rect = self.image.get_rect()
 
         self._normalize()
 
     def _normalize(self):
-        pos_diff = self.position - Vector(self.rect.x, self.rect.y)
-        self.rect.move_ip(*pos_diff)
+        rect_position = Vector(self.rect.x, self.rect.y) / PS.PPU
+        pos_diff = self.position - rect_position
+        self.rect.move_ip(*(pos_diff * PS.PPU))
         diagonal = Vector(self.width, self.height)
         self.center = self.position + diagonal / 2
 
     def update(self):
-        self.position += self.velocity / Settings.FPS
+        self.position += self.velocity / GS.FPS
         self._normalize()
 
     def collide(self, other):
@@ -190,7 +190,7 @@ class Blob(Sprite):
 
 class FallingBlob(Blob):
     def update(self):
-        self.velocity += Settings.GRAVITY
+        self.velocity += PS.GRAVITY
         super().update()
 
 
@@ -201,17 +201,17 @@ class Platform(Blob):
 
 class Player(FallingBlob):
     def __init__(self, **kwargs):
-        super().__init__(width=Settings.BLOB_SIZE, height=Settings.BLOB_SIZE,
+        super().__init__(width=PS.BLOB_SIZE, height=PS.BLOB_SIZE,
                          color='black', **kwargs)
 
     def go_left(self):
-        self.velocity = Vector(-Settings.RUN_SPEED, self.velocity.y)
+        self.velocity = Vector(-PS.RUN_SPEED, self.velocity.y)
 
     def go_right(self):
-        self.velocity = Vector(Settings.RUN_SPEED, self.velocity.y)
+        self.velocity = Vector(PS.RUN_SPEED, self.velocity.y)
 
     def jump(self):
-        self.velocity = Vector(self.velocity.x, -Settings.JUMP_SPEED)
+        self.velocity = Vector(self.velocity.x, -PS.JUMP_SPEED)
 
     def stop(self):
         self.velocity = Vector(0, self.velocity.y)
@@ -220,7 +220,7 @@ class Player(FallingBlob):
 class Gem(Blob):
     def __init__(self, note, winner=False, **kwargs):
         color = 'green' if winner else 'red'
-        super().__init__(width=Settings.BLOB_SIZE, height=Settings.BLOB_SIZE,
+        super().__init__(width=PS.BLOB_SIZE, height=PS.BLOB_SIZE,
                          color=color, **kwargs)
         self.note = note
         self.winner = winner
@@ -232,14 +232,14 @@ class Gem(Blob):
 
 class WelcomeText:
     def __init__(self):
-        font = pygame.font.SysFont(Settings.FONT_FACE, Settings.FONT_SIZE)
+        font = pygame.font.SysFont(PS.FONT_FACE, PS.FONT_SIZE)
         text = "Objective: find the gem with this sound (click to play)"
-        text_image = font.render(text, True, Settings.TEXT_COLOR)
-        margin = Settings.TEXT_MARGIN
+        text_image = font.render(text, True, PS.TEXT_COLOR)
+        margin = PS.TEXT_MARGIN
         size = Vector(*text_image.get_size())
         size += 2 * margin
         self.image = Surface(size)
-        self.image.fill(Settings.TEXT_BG_COLOR)
+        self.image.fill(PS.TEXT_BG_COLOR)
         self.image.blit(text_image, margin)
         self.rect = self.image.get_rect()
 
@@ -254,7 +254,7 @@ class WelcomeText:
 def main():
     pygame.init()
 
-    size = (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT)
+    size = (GS.SCREEN_WIDTH, GS.SCREEN_HEIGHT)
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption('Test platformer')
 
@@ -269,7 +269,7 @@ def main():
         level.handle_events(events)
         level.update()
         level.render(screen)
-        clock.tick(Settings.FPS)
+        clock.tick(GS.FPS)
         pygame.display.flip()
 
     pygame.quit()

@@ -10,14 +10,15 @@ class GameSettings:
     SCREEN_HEIGHT = 600
 
 
-class PlatformerSettings(GameSettings):
+class PlatformerSettings:
     BG_COLOR = Color('white')
-    BLOB_SIZE = 100
-    PLATFORM_HEIGHT = 100
-    GRAVITY = Vector(0, 2)
-    RUN_SPEED = 50
-    JUMP_SPEED = 100
-    SOUND_RADIUS = 150
+    PPU = 100
+    BLOB_SIZE = 1
+    PLATFORM_HEIGHT = 1
+    GRAVITY = Vector(0, 0.02)
+    RUN_SPEED = 1
+    JUMP_SPEED = 1
+    SOUND_RADIUS = 2
     FONT_FACE = 'Arial'
     FONT_SIZE = 24
     TEXT_COLOR = Color('black')
