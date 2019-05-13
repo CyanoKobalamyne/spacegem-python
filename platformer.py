@@ -1,5 +1,4 @@
 """Platformer scene for Level 1."""
-import pygame
 import pygame.display
 import pygame.event
 import pygame.font
@@ -13,6 +12,7 @@ from pygame.sprite import Group, Sprite
 import menus
 from setup import PlatformerSettings as Settings
 from utils import Scene, Vector
+from worlds import World_1
 
 
 class NotePlatformerScene(Scene):
@@ -21,34 +21,21 @@ class NotePlatformerScene(Scene):
         self.platforms = Group()
         self.gems = Group()
         self.blobs = Group()
-
-        platforms = [
-            Platform(position=Vector(
-                    0, Settings.SCREEN_HEIGHT - Settings.BLOB_SIZE)),
-            Platform(position=Vector(
-                    Settings.SCREEN_WIDTH / 2 + Settings.BLOB_SIZE * 1.5,
-                    Settings.SCREEN_HEIGHT - Settings.BLOB_SIZE)),
-        ]
-        gems = [
-            Gem(position=Vector(
-                    0, Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE),
-                note=2),
-            Gem(position=Vector(
-                    Settings.SCREEN_WIDTH - 2 * Settings.BLOB_SIZE,
-                    Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE),
-                note=0,
-                winner=True),
-        ]
         self.player = Player(position=Vector(
             3 * Settings.BLOB_SIZE,
             Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE))
 
-        for blob in platforms:
-            self.blobs.add(blob)
-            self.platforms.add(blob)
-        for blob in gems:
-            self.blobs.add(blob)
-            self.gems.add(blob)
+        level = getattr(World_1, f"Level_{self.state['level'] + 1}")
+
+        for x, y, width, height in level.platforms:
+            platform = Platform(width=width, height=height,
+                                position=Vector(x, y))
+            self.blobs.add(platform)
+            self.platforms.add(platform)
+        for x, y, note, winner in level.gems:
+            gem = Gem(note, winner=winner, position=Vector(x, y))
+            self.blobs.add(gem)
+            self.gems.add(gem)
         self.blobs.add(self.player)
 
         self.channels = {}
@@ -67,14 +54,6 @@ class NotePlatformerScene(Scene):
                 self.player, self.platforms, False):
             self.player.collide(platform)
 
-        # Handle collisions with gems.
-        for gem in pygame.sprite.spritecollide(
-                self.player, self.gems, False):
-            if gem.winner:
-                self.manager.go_to(menus.WinScene(self.state))
-            else:
-                self.manager.go_to(menus.LoseScene(self.state))
-
         # Play sound near gems.
         for gem in self.gems:
             distance = (abs(self.player.center - gem.center)
@@ -84,6 +63,17 @@ class NotePlatformerScene(Scene):
                 self._play_gem_sound(gem, vol_ratio)
             else:
                 self._stop_gem_sound(gem)
+
+        # Handle collisions with gems.
+        for gem in pygame.sprite.spritecollide(
+                self.player, self.gems, False):
+            # End condition.
+            if gem.winner:
+                self.manager.go_to(menus.WinScene(self.state))
+            else:
+                self.manager.go_to(menus.LoseScene(self.state))
+            # Turn off sound.
+            self._stop_all_sounds()
 
     def handle_events(self, events):
         for event in events:
@@ -144,6 +134,10 @@ class NotePlatformerScene(Scene):
             self.channels[gem].stop()
             del self.channels[gem]
 
+    def _stop_all_sounds(self):
+        for channel in self.channels.values():
+            channel.stop()
+
 
 class Blob(Sprite):
     def __init__(self, width, height, color, position, velocity=Vector(0, 0)):
@@ -202,9 +196,7 @@ class FallingBlob(Blob):
 
 class Platform(Blob):
     def __init__(self, **kwargs):
-        super().__init__(width=Settings.SCREEN_WIDTH / 2,
-                         height=Settings.BLOB_SIZE,
-                         color='blue', **kwargs)
+        super().__init__(color='blue', **kwargs)
 
 
 class Player(FallingBlob):
