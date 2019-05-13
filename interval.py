@@ -11,6 +11,29 @@ GREEN = (0, 204, 0)
 
 SEMITONE_MAP = [0, 2, 4, 5, 7, 9, 11, 12]
 
+RED = (255, 0, 0)
+ORANGE = (255, 128, 0)
+YELLOW = (255, 255, 0)
+GREEN = (0, 204, 0)
+TEAL = (0, 255, 255)
+BLUE = (0, 0, 255)
+PURPLE = (150, 0, 255)
+GEM_COLORS = [RED, ORANGE, YELLOW, GREEN, TEAL, BLUE, PURPLE, RED]
+
+
+class Gem(pg.sprite.Sprite): 
+    def __init__(self, x, y, tone):
+        super().__init__()
+
+        self.image = pg.Surface([40, 40])
+        self.image.fill(GEM_COLORS[tone])
+     
+        self.rect = self.image.get_rect()
+        self.rect.y = y
+        self.rect.x = x
+        self.tone = tone
+
+
 class IntervalScene(Scene):
     def __init__(self, signals, lose_time, state):
         super(IntervalScene, self).__init__()

@@ -5,6 +5,7 @@ import pickle
 from utils import *
 import interval
 import menus
+from setup import GameSettings as Settings
 
 BLACK = (0, 0, 0)
 GREY = (127, 127, 127)
@@ -68,7 +69,7 @@ class Spaceship(pg.sprite.Sprite):
         self.cycles = 0
         self.limit = 2
         print(time)
-        self.rect.x = ship["x"] - time/1000*24/self.limit
+        self.rect.x = ship["x"] - time/1000*Settings.FPS/self.limit
         self.rect.y = ship["y"]
 
     def update(self):
@@ -78,4 +79,4 @@ class Spaceship(pg.sprite.Sprite):
             self.rect.x -= 1
 
     def lose_time(self):
-        return (self.rect.x - 100)/(24/self.limit/1000)
+        return (self.rect.x - 100)/(Settings.FPS/self.limit/1000)

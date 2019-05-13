@@ -2,6 +2,7 @@ import pygame as pg
 from pygame.locals import *
 from utils import *
 from spaceships import *
+from platformer import NotePlatformerScene
 
 class TitleScene(Scene):
 
@@ -48,7 +49,7 @@ class LevelsScene(Scene):
             if e.type == MOUSEBUTTONUP:
                 pos = pg.mouse.get_pos()
                 if pg.Rect(50, 490, 200, 50).collidepoint(pos):
-                    self.manager.go_to(World1Scene(self.state))
+                    self.manager.go_to(NotePlatformerScene(self.state))
                 elif pg.Rect(300, 490, 200, 50).collidepoint(pos):
                     self.manager.go_to(World2Scene(self.state))
                 elif pg.Rect(550, 490, 200, 50).collidepoint(pos):
