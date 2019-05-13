@@ -234,7 +234,7 @@ class Gem(Blob):
         self.winner = winner
 
         # Get sound for this note.
-        sound_path = f"./sounds/{note}.wav"
+        sound_path = f"./sounds/short/{note}.wav"
         self.sound = pygame.mixer.Sound(sound_path)
 
 

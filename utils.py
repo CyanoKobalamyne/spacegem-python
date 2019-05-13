@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from numbers import Number
-
+import pygame as pg
 
 class Scene(ABC):
     @abstractmethod

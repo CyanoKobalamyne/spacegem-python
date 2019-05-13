@@ -67,8 +67,7 @@ class Spaceship(pg.sprite.Sprite):
         self.image.fill(GREY)
         self.rect = self.image.get_rect()
         self.cycles = 0
-        self.limit = 2
-        print(time)
+        self.limit = 4
         self.rect.x = ship["x"] - time/1000*Settings.FPS/self.limit
         self.rect.y = ship["y"]
 
