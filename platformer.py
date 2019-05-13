@@ -252,31 +252,3 @@ class WelcomeText:
         screen.blit(self.image, offset)
         self.rect = self.image.get_rect()
         self.rect.move_ip(*offset)
-
-
-def main():
-    pygame.init()
-
-    size = (GS.SCREEN_WIDTH, GS.SCREEN_HEIGHT)
-    screen = pygame.display.set_mode(size)
-    pygame.display.set_caption('Test platformer')
-
-    level = NotePlatformerScene({"level": 0})
-    clock = pygame.time.Clock()
-
-    while True:
-        events = pygame.event.get()
-        if any(event.type == pygame.QUIT for event in events):
-            break
-
-        level.handle_events(events)
-        level.update()
-        level.render(screen)
-        clock.tick(GS.FPS)
-        pygame.display.flip()
-
-    pygame.quit()
-
-
-if __name__ == "__main__":
-    main()

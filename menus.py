@@ -84,7 +84,7 @@ class World1Scene(Scene):
                 pos = pg.mouse.get_pos()
                 lvl = [l for l in self.levelsquares if l.rect.collidepoint(pos)]
                 if len(lvl) > 0 and lvl[0].available:
-                    level_state = {"world": 1,
+                    level_state = {"world": 0,
                                    "level": lvl[0].level}
                     state = {**self.state, **level_state}
                     self.manager.go_to(NotePlatformerScene(state))
