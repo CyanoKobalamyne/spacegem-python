@@ -112,7 +112,6 @@ class TextBox:
         for p in paragraphs:
             p_lines, _ = self._split_text(
                 p, font, width, font_height, line_spacing, max_height)
-            print(p_lines)
             lines.extend(p_lines)
             lines.append('')
         lines.pop()  # remove last extra line.
