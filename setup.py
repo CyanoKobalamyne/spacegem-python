@@ -12,7 +12,7 @@ class GameSettings:
 
 
 class PlatformerSettings:
-    BG_COLOR = Color('white')
+    BG_COLOR = Color('black')
     PPU = 100
     BLOB_SIZE = 1
     PLATFORM_HEIGHT = 1

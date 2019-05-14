@@ -1,7 +1,10 @@
 """Platformer scene for Level 1."""
+import os
+
 import pygame.display
 import pygame.event
 import pygame.font
+import pygame.image
 import pygame.mixer
 import pygame.mouse
 import pygame.sprite
@@ -58,7 +61,7 @@ class NotePlatformerScene(Scene):
 
         # Play sound near gems.
         for gem in self.gems:
-            distance = (abs(self.player.center - gem.center)
+            distance = (abs(Vector(*self.player.rect.center) - Vector(*gem.rect.center))
                         - PS.BLOB_SIZE)
             if distance <= PS.SOUND_RADIUS:
                 vol_ratio = 1 - distance / PS.SOUND_RADIUS
@@ -139,42 +142,40 @@ class NotePlatformerScene(Scene):
 
 
 class Blob(Sprite):
-    def __init__(self, width, height, color, position, velocity=Vector(0, 0)):
+    def __init__(self, position, velocity=Vector(0, 0)):
         super().__init__()
-        self.width = width
-        self.height = height
         self.position = position
         self.velocity = velocity
-
-        self.image = Surface((width * PS.PPU, height * PS.PPU))
-        self.image.fill(Color(color))
         self.rect = self.image.get_rect()
-
         self._normalize()
 
     def _normalize(self):
         rect_position = Vector(self.rect.x, self.rect.y) / PS.PPU
         pos_diff = self.position - rect_position
         self.rect.move_ip(*(pos_diff * PS.PPU))
-        diagonal = Vector(self.width, self.height)
-        self.center = self.position + diagonal / 2
 
     def update(self):
         self.position += self.velocity / GS.FPS
         self._normalize()
 
+    def width(self):
+        return self.rect.width / PS.PPU
+
+    def height(self):
+        return self.rect.height / PS.PPU
+
     def collide(self, other):
         if self.velocity.x > 0:
-            dx = other.position.x - (self.position.x + self.width)
+            dx = other.position.x - (self.position.x + self.width())
         elif self.velocity.x < 0:
-            dx = (other.position.x + other.width) - self.position.x
+            dx = (other.position.x + other.width()) - self.position.x
         else:
             dx = 0
 
         if self.velocity.y > 0:
-            dy = other.position.y - (self.position.y + self.height)
+            dy = other.position.y - (self.position.y + self.height())
         elif self.velocity.y < 0:
-            dy = self.position.y - (other.position.y + other.height)
+            dy = self.position.y - (other.position.y + other.height())
         else:
             dy = 0
 
@@ -188,15 +189,28 @@ class Blob(Sprite):
         self._normalize()
 
 
-class Platform(Blob):
+class RectBlob(Blob):
+    def __init__(self, width, height, color, **kwargs):
+        self.image = Surface((width * PS.PPU, height * PS.PPU))
+        self.image.fill(Color(color))
+        super().__init__(**kwargs)
+
+
+class ImageBlob(Blob):
+    def __init__(self, file, **kwargs):
+        self.image = pygame.image.load(file).convert_alpha()
+        super().__init__(**kwargs)
+
+
+class Platform(RectBlob):
     def __init__(self, **kwargs):
         super().__init__(color='blue', **kwargs)
 
 
-class Player(Blob):
+class Player(RectBlob):
     def __init__(self, **kwargs):
         super().__init__(width=PS.BLOB_SIZE, height=PS.BLOB_SIZE,
-                         color='black', **kwargs)
+                         color='white', **kwargs)
         self.jump_frames = 0
 
     def update(self):
@@ -237,16 +251,15 @@ class Player(Blob):
         self.jump_frames = 0
 
 
-class Gem(Blob):
+class Gem(ImageBlob):
     def __init__(self, note, winner=False, **kwargs):
-        color = 'green' if winner else 'red'
-        super().__init__(width=PS.BLOB_SIZE, height=PS.BLOB_SIZE,
-                         color=color, **kwargs)
+        file = os.path.join('images', f'{note}_gem.png')
+        super().__init__(file=file, **kwargs)
         self.note = note
         self.winner = winner
 
         # Get sound for this note.
-        sound_path = f"./sounds/{note}.wav"
+        sound_path = os.path.join("sounds", f"{note}.wav")
         self.sound = pygame.mixer.Sound(sound_path)
 
 
