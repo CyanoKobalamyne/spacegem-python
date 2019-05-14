@@ -1,6 +1,4 @@
 spacing between gems
-more levels
-help dialogue
 
 next transmission started
 graphics

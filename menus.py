@@ -3,12 +3,12 @@ from pygame.locals import *
 from utils import *
 from spaceships import *
 from platformer import NotePlatformerScene
+from narratives import Narratives
 
 class TitleScene(Scene):
 
     def __init__(self):
         super(TitleScene, self).__init__()
-        self.font = pg.font.SysFont('Monospace', 56)
         self.sfont = pg.font.SysFont('Monospace', 32)
         self.state = {"level_progress": [0,0,0], "num_levels": [0,0,0]}
         # TODO: load number of levels from data for world 1!!
@@ -16,10 +16,10 @@ class TitleScene(Scene):
 
     def render(self, screen):
         screen.fill((0, 0, 0))
-        text1 = self.font.render('SPACEGEM', True, (255, 255, 255))
-        text2 = self.sfont.render('Click anywhere to begin', True, (255, 255, 255))
-        screen.blit(text1, (200, 50))
-        screen.blit(text2, (200, 350))
+        logo = get_image("./images/logo.png")
+        screen.blit(logo, (50,100))
+        text = self.sfont.render('Click anywhere to begin', True, (255, 255, 255))
+        screen.blit(text, (180, 350))
 
     def update(self):
         pass
@@ -27,7 +27,8 @@ class TitleScene(Scene):
     def handle_events(self, events):
         for e in events:
             if e.type == MOUSEBUTTONUP:
-                self.manager.go_to(LevelsScene(self.state))
+                scene = LevelsScene(self.state)
+                self.manager.go_to(NarrativeScene(Narratives.intro, self.state, scene))
             if e.type == KEYDOWN:
                 if e.key == K_0:
                     self.state["level_progress"] = self.state["num_levels"]
@@ -49,9 +50,11 @@ class LevelsScene(Scene):
             if e.type == MOUSEBUTTONUP:
                 pos = pg.mouse.get_pos()
                 if pg.Rect(50, 490, 200, 50).collidepoint(pos):
-                    self.manager.go_to(World1Scene(self.state))
+                    scene = World1Scene(self.state)
+                    self.manager.go_to(NarrativeScene(Narratives.World1.intro, self.state, scene))
                 elif pg.Rect(300, 490, 200, 50).collidepoint(pos):
-                    self.manager.go_to(World2Scene(self.state))
+                    scene = World2Scene(self.state)
+                    self.manager.go_to(NarrativeScene(Narratives.World2.intro, self.state, scene))
                 elif pg.Rect(550, 490, 200, 50).collidepoint(pos):
                     self.manager.go_to(World3Scene(self.state))
 
@@ -87,7 +90,11 @@ class World1Scene(Scene):
                     level_state = {"world": 0,
                                    "level": lvl[0].level}
                     state = {**self.state, **level_state}
-                    self.manager.go_to(NotePlatformerScene(state))
+                    scene = NotePlatformerScene(state)
+                    if len(Narratives.World1.levels[lvl[0].level]) > 0:
+                        self.manager.go_to(NarrativeScene(Narratives.World1.levels[lvl[0].level], state, scene))
+                    else:
+                        self.manager.go_to(scene)
                 elif self.back.rect.collidepoint(pos):
                     self.manager.go_to(LevelsScene(self.state))
 
@@ -127,7 +134,11 @@ class World2Scene(Scene):
                                    "start_time": pg.time.get_ticks(),
                                    "curr_time": pg.time.get_ticks()}
                     state = {**self.state, **level_state}
-                    self.manager.go_to(SpaceshipScene(state))
+                    scene = SpaceshipScene(state)
+                    if len(Narratives.World2.levels[lvl[0].level]) > 0:
+                        self.manager.go_to(NarrativeScene(Narratives.World2.levels[lvl[0].level], state, scene))
+                    else:
+                        self.manager.go_to(scene)
                 elif self.back.rect.collidepoint(pos):
                     self.manager.go_to(LevelsScene(self.state))
 
@@ -206,3 +217,49 @@ class LevelSquare(pg.sprite.Sprite):
         pg.draw.rect(screen, self.color, self.rect, 5)
         text = self.font.render(str(self.level+1), True, self.color)
         screen.blit(text, (self.rect.x+25,self.rect.y+5))
+
+class NarrativeScene(Scene):
+    def __init__(self, texts, state, scene):
+        super(NarrativeScene, self).__init__()
+        self.font = pg.font.SysFont('Monospace', 32)
+        self.texts = texts
+        self.text_num = 0
+        self.state = state
+        self.scene = scene
+        self.bg = pg.image.load("./images/narrative-background.png")
+
+    def render(self, screen):
+        screen.blit(self.bg, (0,0))
+        self.drawText(screen, self.texts[self.text_num])
+
+    def update(self):
+        pass
+
+    def handle_events(self, events):
+        for e in events:
+            if e.type == MOUSEBUTTONUP:
+                pos = pg.mouse.get_pos()
+                if pg.Rect(380, 500, 120, 50).collidepoint(pos):
+                    self.text_num += 1
+                elif pg.Rect(550, 500, 200, 50).collidepoint(pos):
+                    self.text_num = len(self.texts)
+                if self.text_num == len(self.texts):
+                    self.manager.go_to(self.scene)
+
+    def drawText(self, screen, text):
+        rect = pg.Rect(50,70,700,450)
+        y = rect.top
+        lineSpacing = -2
+        fontHeight = self.font.size("Tg")[1]
+
+        while text:
+            i = 1
+            while self.font.size(text[:i])[0] < rect.width and i < len(text):
+                i += 1
+            if i < len(text):
+                i = text.rfind(" ", 0, i) + 1
+            image = self.font.render(text[:i], True, (255,255,255))
+            screen.blit(image, (rect.left, y))
+            y += fontHeight + lineSpacing
+            text = text[i:]
+        return text
