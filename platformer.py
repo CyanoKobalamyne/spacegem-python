@@ -15,7 +15,7 @@ from pygame.sprite import Group, Sprite
 import menus
 from setup import GameSettings as GS
 from setup import PlatformerSettings as PS
-from utils import HorizontalScrollingGroup, Scene, Vector
+from utils import HorizontalScrollingGroup, Scene, TextBox, Vector
 from worlds import World_1
 
 
@@ -45,11 +45,18 @@ class NotePlatformerScene(Scene):
 
         self.channels = {}
 
-        self.welcome = WelcomeText()
-        self.at_welcome = True
+        self.greeting = TextBox(
+            "Your task is to find the gem whih emits a certain sound.\nYou "
+            "can listen to the sound by clicking on this box. You can also "
+            "listen to it during the game by clicking on the \"Goal\" button "
+            "in the corner.\nClick outside the box to start.",
+            bgcolor=PS.TEXT_BGCOLOR,
+            max_size=(GS.SCREEN_WIDTH * 0.6, GS.SCREEN_HEIGHT * 0.6),
+            style=PS.TEXT_STYLE)
+        self.started = False
 
     def update(self):
-        if self.at_welcome:
+        if not self.started:
             return
 
         self.blobs.update()
@@ -61,7 +68,8 @@ class NotePlatformerScene(Scene):
 
         # Play sound near gems.
         for gem in self.gems:
-            distance = (abs(Vector(*self.player.rect.center) - Vector(*gem.rect.center))
+            distance = (abs(Vector(*self.player.rect.center)
+                            - Vector(*gem.rect.center))
                         - PS.BLOB_SIZE)
             if distance <= PS.SOUND_RADIUS:
                 vol_ratio = 1 - distance / PS.SOUND_RADIUS
@@ -82,15 +90,17 @@ class NotePlatformerScene(Scene):
 
     def handle_events(self, events):
         for event in events:
-            if self.at_welcome:
+            # Handle interaction with greeting box.
+            if not self.started:
                 if event.type == pygame.MOUSEBUTTONUP:
                     pos = pygame.mouse.get_pos()
-                    if self.welcome.rect.collidepoint(pos):
+                    if self.greeting.rect.collidepoint(pos):
                         self._play_goal_sound()
                     else:
-                        self.at_welcome = False
+                        self.started = True
                 continue
 
+            # Handle navigation key presses.
             if event.type == pygame.KEYDOWN:
                 if event.key in PS.LEFT_KEYS:
                     self.player.go_left()
@@ -99,8 +109,7 @@ class NotePlatformerScene(Scene):
                 elif event.key in PS.JUMP_KEYS:
                     if self.player.can_jump(self.platforms):
                         self.player.jump()
-
-            if event.type == pygame.KEYUP:
+            elif event.type == pygame.KEYUP:
                 if event.key in PS.LEFT_KEYS:
                     self.player.stop_left()
                 elif event.key in PS.RIGHT_KEYS:
@@ -111,8 +120,11 @@ class NotePlatformerScene(Scene):
     def render(self, screen):
         screen.fill(PS.BG_COLOR)
         self.blobs.draw(screen)
-        if self.at_welcome:
-            self.welcome.draw(screen)
+        if not self.started:
+            overlay = Surface(screen.get_size(), pygame.SRCALPHA)
+            overlay.fill(PS.OVERLAY_COLOR)
+            screen.blit(overlay, (0, 0))
+            self.greeting.draw(screen)
 
     def _play_goal_sound(self):
         winning_gems = (gem for gem in self.gems if gem.winner)
