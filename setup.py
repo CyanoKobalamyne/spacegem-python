@@ -20,13 +20,23 @@ class PlatformerSettings:
     RUN_SPEED = 1
     JUMP_SPEED = 3
     SOUND_RADIUS = 2
-    FONT_FACE = 'Arial'
-    FONT_SIZE = 24
-    TEXT_COLOR = Color('black')
-    TEXT_MARGIN = Vector(10, 5)
-    TEXT_BG_COLOR = Color('lightblue')
     SCROLL_MARGIN = 1
     JUMP_TIME = 0.5
     LEFT_KEYS = {pygame.K_LEFT, pygame.K_a}
     RIGHT_KEYS = {pygame.K_RIGHT, pygame.K_d}
     JUMP_KEYS = {pygame.K_UP, pygame.K_w, pygame.K_SPACE}
+    TEXT_BGCOLOR = Color('white')
+    TEXT_STYLE = {
+        "text": {
+            "margin": Vector(10, 5),
+        },
+        "paragraph": {
+            "spacing": 10,
+        },
+        "font": {
+            "family": 'Arial',
+            "size": 24,
+            "color": Color('black'),
+        }
+    }
+    OVERLAY_COLOR = Color(255, 255, 255, 127)
