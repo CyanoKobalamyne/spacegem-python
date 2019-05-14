@@ -28,7 +28,8 @@ class NotePlatformerScene(Scene):
 
         self.platforms = Group()
         self.gems = Group()
-        level_width = PS.PPU * max(map(lambda p: p[0] + p[2], level.platforms))
+        level_width = PS.PPU * (
+            max(map(lambda p: p[0] + p[2], level.platforms)) + PS.BLOB_SIZE)
         self.blobs = HorizontalScrollingGroup(
             self.player, (GS.SCREEN_WIDTH, GS.SCREEN_HEIGHT),
             (level_width, GS.SCREEN_HEIGHT), PS.SCROLL_MARGIN * PS.PPU)

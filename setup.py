@@ -18,10 +18,10 @@ class PlatformerSettings:
     PLATFORM_HEIGHT = 0.2
     PLATFORM_COLOR = Color('grey')
     GRAVITY = Vector(0, 5)
-    RUN_SPEED = 1
+    RUN_SPEED = 2
     JUMP_SPEED = 3
     SOUND_RADIUS = 2
-    SCROLL_MARGIN = 1
+    SCROLL_MARGIN = 2
     JUMP_TIME = 0.5
     LEFT_KEYS = {pygame.K_LEFT, pygame.K_a}
     RIGHT_KEYS = {pygame.K_RIGHT, pygame.K_d}
