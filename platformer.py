@@ -196,10 +196,9 @@ class Platform(RectBlob):
                          **kwargs)
 
 
-class Player(RectBlob):
+class Player(ImageBlob):
     def __init__(self, **kwargs):
-        super().__init__(width=PS.BLOB_SIZE, height=PS.BLOB_SIZE,
-                         color=Color('white'), **kwargs)
+        super().__init__(file=os.path.join("images", "maincharacter_right1_rescaled2.png"), **kwargs)
         self.jump_frames = 0
 
     def update(self):
