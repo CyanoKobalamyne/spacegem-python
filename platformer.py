@@ -16,12 +16,12 @@ import menus
 from setup import GameSettings as GS
 from setup import PlatformerSettings as PS
 from utils import Button, HorizontalScrollingGroup, Scene, TextBox, Vector
-from worlds import World_1
+import world1
 
 
 class NotePlatformerScene(Scene):
     def __init__(self, state):
-        level = getattr(World_1, f"Level_{state['level'] + 1}")
+        level = getattr(world1, f"Level_{state['level'] + 1}")
 
         self.state = state
         self.player = Player(position=Vector(*level.player))
@@ -33,9 +33,8 @@ class NotePlatformerScene(Scene):
             self.player, (GS.SCREEN_WIDTH, GS.SCREEN_HEIGHT),
             (level_width, GS.SCREEN_HEIGHT), PS.SCROLL_MARGIN * PS.PPU)
 
-        for x, y, width, height in level.platforms:
-            platform = Platform(width=width, height=height,
-                                position=Vector(x, y))
+        for x, y, width in level.platforms:
+            platform = Platform(width=width, position=Vector(x, y))
             self.blobs.add(platform)
             self.platforms.add(platform)
         for x, y, note, winner in level.gems:
@@ -194,7 +193,7 @@ class Blob(Sprite):
 class RectBlob(Blob):
     def __init__(self, width, height, color, **kwargs):
         self.image = Surface((width * PS.PPU, height * PS.PPU))
-        self.image.fill(Color(color))
+        self.image.fill(color)
         super().__init__(**kwargs)
 
 
@@ -206,13 +205,14 @@ class ImageBlob(Blob):
 
 class Platform(RectBlob):
     def __init__(self, **kwargs):
-        super().__init__(color='blue', **kwargs)
+        super().__init__(height=PS.PLATFORM_HEIGHT, color=PS.PLATFORM_COLOR,
+                         **kwargs)
 
 
 class Player(RectBlob):
     def __init__(self, **kwargs):
         super().__init__(width=PS.BLOB_SIZE, height=PS.BLOB_SIZE,
-                         color='white', **kwargs)
+                         color=Color('white'), **kwargs)
         self.jump_frames = 0
 
     def update(self):

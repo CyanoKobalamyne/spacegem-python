@@ -4,6 +4,7 @@ from utils import *
 from spaceships import *
 from platformer import NotePlatformerScene
 from narratives import Narratives
+import world1
 
 class TitleScene(Scene):
 
@@ -11,7 +12,7 @@ class TitleScene(Scene):
         super(TitleScene, self).__init__()
         self.sfont = pg.font.SysFont('Monospace', 32)
         self.state = {"level_progress": [0,0,0], "num_levels": [0,0,0]}
-        self.state["num_levels"][0] = 1
+        self.state["num_levels"][0] = len([attr for attr in dir(world1) if not attr.startswith('__')])
         self.state["num_levels"][1] = len(pickle.load(open("levels", "rb")))
 
     def render(self, screen):

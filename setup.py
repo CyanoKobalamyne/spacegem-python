@@ -15,7 +15,8 @@ class PlatformerSettings:
     BG_COLOR = Color('black')
     PPU = 100
     BLOB_SIZE = 1
-    PLATFORM_HEIGHT = 1
+    PLATFORM_HEIGHT = 0.2
+    PLATFORM_COLOR = Color('grey')
     GRAVITY = Vector(0, 5)
     RUN_SPEED = 1
     JUMP_SPEED = 3
