@@ -74,7 +74,7 @@ class NotePlatformerScene(Scene):
         # Play sound near gems.
         for gem in self.gems:
             distance = (abs(Vector(*self.player.rect.center)
-                            - Vector(*gem.rect.center))
+                            - Vector(*gem.rect.center)) / PS.PPU
                         - PS.BLOB_SIZE)
             if distance <= PS.SOUND_RADIUS:
                 vol_ratio = 1 - distance / PS.SOUND_RADIUS
