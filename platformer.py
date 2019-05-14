@@ -217,7 +217,7 @@ class Player(RectBlob):
         if self.jump_frames > 0:
             self.jump_frames -= 1
         else:
-            self.velocity += PS.GRAVITY
+            self.velocity += PS.GRAVITY / GS.FPS
         super().update()
 
     def can_jump(self, platforms):

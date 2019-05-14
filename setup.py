@@ -16,7 +16,7 @@ class PlatformerSettings:
     PPU = 100
     BLOB_SIZE = 1
     PLATFORM_HEIGHT = 1
-    GRAVITY = Vector(0, 0.1)
+    GRAVITY = Vector(0, 5)
     RUN_SPEED = 1
     JUMP_SPEED = 3
     SOUND_RADIUS = 2
