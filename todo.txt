@@ -1,4 +1,12 @@
-more levels
+next transmission started
+spacing between gems
 broken screen for certain easy ships
-timer for interval screen
+more levels
+help dialogue
 
+better sounding notes
+graphics
+
+mouseover hear
+better color for transmission signal
+timer for interval screen

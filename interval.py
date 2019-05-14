@@ -21,12 +21,11 @@ PURPLE = (150, 0, 255)
 GEM_COLORS = [RED, ORANGE, YELLOW, GREEN, TEAL, BLUE, PURPLE, RED]
 
 
-class Gem(pg.sprite.Sprite): 
+class Gem(pg.sprite.Sprite):
     def __init__(self, x, y, tone):
         super().__init__()
 
-        self.image = pg.Surface([40, 40])
-        self.image.fill(GEM_COLORS[tone])
+        self.image = get_image("./images/gem"+ str(tone) +".png", 0, 0, 56, 60)
 
         self.rect = self.image.get_rect()
         self.rect.y = y
@@ -40,11 +39,12 @@ class IntervalScene(Scene):
 
         self.sprites = pg.sprite.Group()
         self.flag = ErrorFlag()
+        self.timeremaining = TimeRemaining(lose_time)
         self.sprites.add(self.flag)
         self.sound = SoundDisplay(self.flag)
         self.gems = pg.sprite.Group()
         for i in range(8):
-            self.gems.add(Gem(60 + i*60, 450, i))
+            self.gems.add(Gem(52 + i*60, 440, i))
         self.signals = signals
         self.sound.signal = signals[0]
         self.interval_num = 0
@@ -67,8 +67,9 @@ class IntervalScene(Scene):
             self.manager.go_to(menus.LoseScene(self.state))
         screen.blit(self.bg, (0,0))
         self.gems.draw(screen)
-        self.sound.draw(screen)
+        self.sound.draw(screen, self.state["disrupt"])
         self.sprites.draw(screen)
+        self.timeremaining.draw(screen, self.lose_time-(pg.time.get_ticks() - self.state["curr_time"]))
         gem = self.mouse_gem()
         if len(gem) > 0 and (self.mouseover != gem[0].tone):
             self.mouseover = gem[0].tone
@@ -149,16 +150,17 @@ class SoundDisplay:
             self.complete_time = pg.time.get_ticks()
         return correct
 
-    def draw(self, screen):
+    def draw(self, screen, disrupt):
         if len(self.notes) == 2 and pg.time.get_ticks() - self.complete_time > 1000:
             self.flag.update_status(BLACK)
             self.notes = []
-        self.draw_peaks(self.signal[0], 0, BRIGHT_GREEN, screen)
-        self.draw_peaks(self.signal[1], 1.5, BRIGHT_GREEN, screen)
+        if not disrupt:
+            self.draw_peaks(self.signal[0], 0, BLUE, screen)
+            self.draw_peaks(self.signal[1], 1.5, BLUE, screen)
         if len(self.notes) > 0:
-            self.draw_peaks(self.notes[0], 4, RED, screen)
+            self.draw_peaks(self.notes[0], 4, BLUE, screen)
         if len(self.notes) > 1:
-            self.draw_peaks(self.notes[1], 5.5, RED, screen)
+            self.draw_peaks(self.notes[1], 5.5, BLUE, screen)
 
 class ErrorFlag(pg.sprite.Sprite):
     def __init__(self):
@@ -172,3 +174,17 @@ class ErrorFlag(pg.sprite.Sprite):
 
     def update_status(self, color):
         self.image.fill(color)
+
+class TimeRemaining:
+    def __init__(self, total_time):
+        self.total_time = total_time
+        self.remaining_time = total_time
+
+    def draw(self, screen, remaining_time):
+        width = (remaining_time/self.total_time)*370
+        if width > 74:
+            color = GREEN
+        else:
+            color = RED
+        pg.draw.rect(screen, color, pg.Rect(310, 540, width, 20))
+

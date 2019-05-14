@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 22.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 288 288" style="enable-background:new 0 0 288 288;" xml:space="preserve">
+<style type="text/css">
+	.st0{opacity:0.2;fill:url(#SVGID_1_);}
+	.st1{fill:#E88F9F;}
+	.st2{fill:none;stroke:#D14E67;stroke-width:2;stroke-miterlimit:10;}
+	.st3{opacity:0.2;fill:url(#SVGID_2_);}
+	.st4{fill:#F7931E;}
+	.st5{fill:none;stroke:#DB6300;stroke-width:2;stroke-miterlimit:10;}
+	.st6{opacity:0.2;fill:url(#SVGID_3_);stroke:url(#SVGID_4_);stroke-miterlimit:10;}
+	.st7{fill:#FFD400;}
+	.st8{fill:none;stroke:#AA7B04;stroke-width:2;stroke-miterlimit:10;}
+	.st9{opacity:0.2;fill:url(#SVGID_5_);stroke:url(#SVGID_6_);stroke-miterlimit:10;}
+	.st10{fill:#6954D1;}
+	.st11{fill:none;stroke:#3F3193;stroke-width:2;stroke-miterlimit:10;}
+	.st12{opacity:0.2;fill:url(#SVGID_7_);}
+	.st13{fill:#009245;}
+	.st14{fill:none;stroke:#006837;stroke-width:2;stroke-miterlimit:10;}
+	.st15{opacity:0.2;fill:url(#SVGID_8_);}
+	.st16{fill:#29ABE2;}
+	.st17{fill:none;stroke:#0071BC;stroke-width:2;stroke-miterlimit:10;}
+	.st18{opacity:0.2;fill:url(#SVGID_9_);}
+	.st19{fill:#A54EF9;}
+	.st20{fill:none;stroke:#5D00A5;stroke-width:2;stroke-miterlimit:10;}
+</style>
+<radialGradient id="SVGID_1_" cx="144" cy="140.9774" r="106.6256" gradientUnits="userSpaceOnUse">
+	<stop  offset="0" style="stop-color:#FF7300"/>
+	<stop  offset="0.426" style="stop-color:#FE7300;stop-opacity:0.9913"/>
+	<stop  offset="0.5691" style="stop-color:#F47200;stop-opacity:0.7442"/>
+	<stop  offset="0.8144" style="stop-color:#D87100;stop-opacity:0.3205"/>
+	<stop  offset="1" style="stop-color:#BF6F00;stop-opacity:0"/>
+</radialGradient>
+<circle class="st0" cx="144" cy="141" r="106.6"/>
+<polygon class="st4" points="197.7,185 132.7,209.5 79.1,165.5 90.3,97 155.3,72.5 208.9,116.5 "/>
+<g>
+	<polygon class="st5" points="197.7,185 132.7,209.5 79.1,165.5 90.3,97 155.3,72.5 208.9,116.5 	"/>
+	<polygon class="st5" points="127.8,120.7 120.8,159.3 175.8,135.7 	"/>
+	<polyline class="st5" points="208.9,116.5 175.8,135.7 155.3,72.5 127.8,120.7 90.3,97 	"/>
+	<polyline class="st5" points="79.1,165.5 120.8,159.3 132.7,209.5 175.8,135.7 197.7,185 	"/>
+</g>
+</svg>
