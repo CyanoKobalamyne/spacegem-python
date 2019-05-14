@@ -8,7 +8,6 @@ class TitleScene(Scene):
 
     def __init__(self):
         super(TitleScene, self).__init__()
-        self.font = pg.font.SysFont('Monospace', 56)
         self.sfont = pg.font.SysFont('Monospace', 32)
         self.state = {"level_progress": [0,0,0], "num_levels": [0,0,0]}
         # TODO: load number of levels from data for world 1!!
@@ -16,10 +15,10 @@ class TitleScene(Scene):
 
     def render(self, screen):
         screen.fill((0, 0, 0))
-        text1 = self.font.render('SPACEGEM', True, (255, 255, 255))
-        text2 = self.sfont.render('Click anywhere to begin', True, (255, 255, 255))
-        screen.blit(text1, (200, 50))
-        screen.blit(text2, (200, 350))
+        logo = get_image("./images/logo.png")
+        screen.blit(logo, (50,100))
+        text = self.sfont.render('Click anywhere to begin', True, (255, 255, 255))
+        screen.blit(text, (180, 350))
 
     def update(self):
         pass
@@ -102,6 +101,23 @@ class World2Scene(Scene):
             available = (i <= self.state["level_progress"][1])
             self.levelsquares.add(LevelSquare(50+150*i, 300, i, available))
 
+        self.narratives = [
+            ["In the future, all music is controlled by Algorhythm, the robot overlord.",
+             "With the help of Master Doremi Fasolati, you must collect the Gems of Symphony and unlock the musical mysteries inside!", "These 7 gems "],
+            []
+        ]
+
+        self.narratives = [
+            ["Now that you've collected all the gems, it is time to venture to Algorhythm's home planet to take down the robots yourself. However, Algorhythm's guard ships patrol every corner of the galaxy, so you'll need to be clever to get past them.",
+             "Each ship has a unique transmission code it uses to communicate with other ships and verify its identity. If you can imitate the transmission code, the guard ship will ignore you, and you will be safe.",
+             "To imitate the transmission, first click on an approaching ship, then select two gems which are musically the same distance apart as the two tones represented in the transmission. Make sure you succeed before any of the ships get too close, or you'll be discovered!"],
+            [],
+            [],
+            ["Looks like Algorhythm has sent out a new type of ship with electronic scrambling equipment. While dealing with these ships, you won't be able to visualize the transmission peaks, but you can still hear the transmission tones. Spot these ships by the green glow around the hull."]
+        ]
+
+
+
     def render(self, screen):
         screen.fill((0, 0, 0))
         pg.draw.rect(screen, (255,255,255), Rect(250,100,300,100), 5)
@@ -127,7 +143,11 @@ class World2Scene(Scene):
                                    "start_time": pg.time.get_ticks(),
                                    "curr_time": pg.time.get_ticks()}
                     state = {**self.state, **level_state}
-                    self.manager.go_to(SpaceshipScene(state))
+                    scene = SpaceshipScene(state)
+                    if len(self.narratives[lvl[0].level]) > 0:
+                        self.manager.go_to(NarrativeScene(self.narratives[lvl[0].level], state, scene))
+                    else:
+                        self.manager.go_to(SpaceshipScene(state))
                 elif self.back.rect.collidepoint(pos):
                     self.manager.go_to(LevelsScene(self.state))
 
@@ -206,3 +226,46 @@ class LevelSquare(pg.sprite.Sprite):
         pg.draw.rect(screen, self.color, self.rect, 5)
         text = self.font.render(str(self.level+1), True, self.color)
         screen.blit(text, (self.rect.x+25,self.rect.y+5))
+
+class NarrativeScene(Scene):
+    def __init__(self, texts, state, scene):
+        super(NarrativeScene, self).__init__()
+        self.font = pg.font.SysFont('Monospace', 32)
+        self.texts = texts
+        self.text_num = 0
+        self.state = state
+        self.scene = scene
+
+    def render(self, screen):
+        screen.fill((0, 0, 0))
+        #text = self.font.render(self.texts[self.text_num], True, (255, 255, 255))
+        self.drawText(screen, self.texts[self.text_num])
+        #screen.blit(text, (100, 100))
+
+    def update(self):
+        pass
+
+    def handle_events(self, events):
+        for e in events:
+            if e.type == MOUSEBUTTONUP:
+                self.text_num += 1
+                if self.text_num == len(self.texts):
+                    self.manager.go_to(self.scene)
+
+    def drawText(self, screen, text):
+        rect = pg.Rect(100,100,700,500)
+        y = rect.top
+        lineSpacing = -2
+        fontHeight = self.font.size("Tg")[1]
+
+        while text:
+            i = 1
+            while self.font.size(text[:i])[0] < rect.width and i < len(text):
+                i += 1
+            if i < len(text):
+                i = text.rfind(" ", 0, i) + 1
+            image = self.font.render(text[:i], True, (255,255,255))
+            screen.blit(image, (rect.left, y))
+            y += fontHeight + lineSpacing
+            text = text[i:]
+        return text
