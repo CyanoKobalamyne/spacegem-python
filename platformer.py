@@ -130,6 +130,9 @@ class NotePlatformerScene(Scene):
     def quit(self, win):
         for gem in self.gems:
             gem.sound.stop()
+        if win:
+            self.state["level_progress"][self.state["world"]] = (
+                self.state["level"] + 1)
         next_scene = menus.WinScene if win else menus.LoseScene
         self.manager.go_to(next_scene(self.state))
 
