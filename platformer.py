@@ -16,26 +16,26 @@ import menus
 from setup import GameSettings as GS
 from setup import PlatformerSettings as PS
 from utils import Button, HorizontalScrollingGroup, Scene, TextBox, Vector
-from worlds import World_1
+import world1
 
 
 class NotePlatformerScene(Scene):
     def __init__(self, state):
-        level = getattr(World_1, f"Level_{state['level'] + 1}")
+        level = getattr(world1, f"Level_{state['level'] + 1}")
 
         self.state = state
         self.player = Player(position=Vector(*level.player))
 
         self.platforms = Group()
         self.gems = Group()
-        level_width = PS.PPU * max(map(lambda p: p[0] + p[2], level.platforms))
+        level_width = PS.PPU * (
+            max(map(lambda p: p[0] + p[2], level.platforms)) + PS.BLOB_SIZE)
         self.blobs = HorizontalScrollingGroup(
             self.player, (GS.SCREEN_WIDTH, GS.SCREEN_HEIGHT),
             (level_width, GS.SCREEN_HEIGHT), PS.SCROLL_MARGIN * PS.PPU)
 
-        for x, y, width, height in level.platforms:
-            platform = Platform(width=width, height=height,
-                                position=Vector(x, y))
+        for x, y, width in level.platforms:
+            platform = Platform(width=width, position=Vector(x, y))
             self.blobs.add(platform)
             self.platforms.add(platform)
         for x, y, note, winner in level.gems:
@@ -140,49 +140,35 @@ class NotePlatformerScene(Scene):
 class Blob(Sprite):
     def __init__(self, position, velocity=Vector(0, 0)):
         super().__init__()
-        self.position = position
-        self.velocity = velocity
+        self.velocity = velocity * PS.PPU
         self.rect = self.image.get_rect()
-        self._normalize()
-
-    def _normalize(self):
-        rect_position = Vector(self.rect.x, self.rect.y) / PS.PPU
-        pos_diff = self.position - rect_position
-        self.rect.move_ip(*(pos_diff * PS.PPU))
+        self.rect.move_ip(position * PS.PPU)
 
     def update(self):
-        self.position += self.velocity / GS.FPS
-        self._normalize()
-
-    def width(self):
-        return self.rect.width / PS.PPU
-
-    def height(self):
-        return self.rect.height / PS.PPU
+        self.rect.x += self.velocity.x / GS.FPS
+        self.rect.y += self.velocity.y / GS.FPS
 
     def collide(self, other):
         if self.velocity.x > 0:
-            dx = other.position.x - (self.position.x + self.width())
+            dx = other.rect.left - self.rect.right
         elif self.velocity.x < 0:
-            dx = (other.position.x + other.width()) - self.position.x
+            dx = other.rect.right - self.rect.left
         else:
-            dx = 0
+            dx = None
 
         if self.velocity.y > 0:
-            dy = other.position.y - (self.position.y + self.height())
+            dy = other.rect.top - self.rect.bottom
         elif self.velocity.y < 0:
-            dy = self.position.y - (other.position.y + other.height())
+            dy = self.rect.top - other.rect.bottom
         else:
-            dy = 0
+            dy = None
 
-        if dy == 0 or abs(dx) <= abs(dy):
+        if dx is not None and (dy is None or abs(dx) <= abs(dy)):
             self.velocity = Vector(0, self.velocity.y)
-            self.position += Vector(dx, 0)
-        if dx == 0 or abs(dy) <= abs(dx):
+            self.rect.x += dx
+        if dy is not None and (dx is None or abs(dy) <= abs(dx)):
             self.velocity = Vector(self.velocity.x, 0)
-            self.position += Vector(0, dy)
-
-        self._normalize()
+            self.rect.y += dy
 
     @staticmethod
     def distance(blob1, blob2):
@@ -194,7 +180,7 @@ class Blob(Sprite):
 class RectBlob(Blob):
     def __init__(self, width, height, color, **kwargs):
         self.image = Surface((width * PS.PPU, height * PS.PPU))
-        self.image.fill(Color(color))
+        self.image.fill(color)
         super().__init__(**kwargs)
 
 
@@ -206,39 +192,38 @@ class ImageBlob(Blob):
 
 class Platform(RectBlob):
     def __init__(self, **kwargs):
-        super().__init__(color='blue', **kwargs)
+        super().__init__(height=PS.PLATFORM_HEIGHT, color=PS.PLATFORM_COLOR,
+                         **kwargs)
 
 
 class Player(RectBlob):
     def __init__(self, **kwargs):
         super().__init__(width=PS.BLOB_SIZE, height=PS.BLOB_SIZE,
-                         color='white', **kwargs)
+                         color=Color('white'), **kwargs)
         self.jump_frames = 0
 
     def update(self):
         if self.jump_frames > 0:
             self.jump_frames -= 1
         else:
-            self.velocity += PS.GRAVITY / GS.FPS
+            self.velocity += PS.GRAVITY * PS.PPU / GS.FPS
         super().update()
 
     def can_jump(self, platforms):
-        self.position += Vector(0, 2) / PS.PPU
-        self._normalize()
+        self.rect.y += 2
         n_platforms = len(pygame.sprite.spritecollide(
             self, platforms, False))
-        self.position -= Vector(0, 2) / PS.PPU
-        self._normalize()
+        self.rect.y -= 2
         return n_platforms > 0
 
     def go_left(self):
-        self.velocity = Vector(-PS.RUN_SPEED, self.velocity.y)
+        self.velocity = Vector(-PS.RUN_SPEED * PS.PPU, self.velocity.y)
 
     def go_right(self):
-        self.velocity = Vector(PS.RUN_SPEED, self.velocity.y)
+        self.velocity = Vector(PS.RUN_SPEED * PS.PPU, self.velocity.y)
 
     def jump(self):
-        self.velocity = Vector(self.velocity.x, -PS.JUMP_SPEED)
+        self.velocity = Vector(self.velocity.x, -PS.JUMP_SPEED * PS.PPU)
         self.jump_frames = PS.JUMP_TIME * GS.FPS
 
     def stop_left(self):
