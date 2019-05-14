@@ -25,7 +25,7 @@ class Gem(pg.sprite.Sprite):
     def __init__(self, x, y, tone):
         super().__init__()
 
-        self.image = get_image("./images/gem"+ str(tone) +".png", 0, 0, 56, 60)
+        self.image = get_image("./images/gem"+ str(tone) +".png").subsurface(pg.Rect(0,0,56,58))
 
         self.rect = self.image.get_rect()
         self.rect.y = y

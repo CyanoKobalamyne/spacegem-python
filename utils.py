@@ -60,9 +60,6 @@ class BackButton():
         text = self.font.render("Back", True, (255, 255, 255))
         screen.blit(text, (60,55))
 
-def get_image(file, x, y, width, height):
-    image_file = pg.image.load(file).convert()
-    image = pg.Surface([width, height]).convert_alpha()
-    image.blit(image_file, (0,0), (x,y,width,height))
-    #image.set_colorkey((0,0,0))
+def get_image(file):
+    image = pg.image.load(file).convert_alpha()
     return image
