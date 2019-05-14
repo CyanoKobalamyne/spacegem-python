@@ -44,7 +44,8 @@ class IntervalScene(Scene):
         self.sound = SoundDisplay(self.flag)
         self.gems = pg.sprite.Group()
         for i in range(8):
-            self.gems.add(Gem(52 + i*60, 440, i))
+            if i not in state["broken"]:
+                self.gems.add(Gem(52 + i*60, 440, i))
         self.signals = signals
         self.sound.signal = signals[0]
         self.interval_num = 0

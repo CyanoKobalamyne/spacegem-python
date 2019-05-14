@@ -34,5 +34,10 @@ class Narratives:
             [],
             [
                 "Looks like Algorhythm has sent out a new type of ship with electronic scrambling equipment. While dealing with these ships, you won't be able to visualize the transmission peaks, but you can still hear the transmission tones. Spot these ships by the green glow around the hull."
+            ],
+            [
+                "Algorhthm has noticed something seems off with his DeafTones fleet routes, so he's created another new type of ship with a powerful gem suppressing transmitter. Spot these ships by the red suppression signals coming from the ship.",
+                "When facing these ships, you may not be able to use gems which sound exactly like the transmission, but remember, all that matters is that the gems are the same distance apart, so using Red and Orange gems would work equally well in a situation where you'd need the Orange and Yellow gems.",
+                "If you haven't already noticed, the notes the gems emit are not evenly spaced; for example, the Yellow and Green gems are slightly closer to each other than the Red and Orange gems or Orange and Yellow gems are. You'll need to pay close attention to make sure you match the transmission correctly."
             ]
         ]
