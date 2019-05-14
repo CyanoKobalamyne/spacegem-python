@@ -15,7 +15,7 @@ from pygame.sprite import Group, Sprite
 import menus
 from setup import GameSettings as GS
 from setup import PlatformerSettings as PS
-from utils import HorizontalScrollingGroup, Scene, TextBox, Vector
+from utils import Button, HorizontalScrollingGroup, Scene, TextBox, Vector
 from worlds import World_1
 
 
@@ -54,6 +54,8 @@ class NotePlatformerScene(Scene):
             max_size=(GS.SCREEN_WIDTH * 0.6, GS.SCREEN_HEIGHT * 0.6),
             style=PS.TEXT_STYLE)
         self.started = False
+
+        self.sound_btn = Button("Target sound", Vector(50, 50), Vector(10, 5))
 
     def update(self):
         if not self.started:
@@ -120,6 +122,7 @@ class NotePlatformerScene(Scene):
     def render(self, screen):
         screen.fill(PS.BG_COLOR)
         self.blobs.draw(screen)
+        self.sound_btn.draw(screen)
         if not self.started:
             overlay = Surface(screen.get_size(), pygame.SRCALPHA)
             overlay.fill(PS.OVERLAY_COLOR)
