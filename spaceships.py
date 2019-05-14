@@ -28,7 +28,9 @@ class SpaceshipScene(Scene):
         time = self.state["curr_time"] - self.state["start_time"]
         for i in range(len(self.level)):
             if self.state["ships"][i]:
-                self.spaceships.add(Spaceship(self.level[i], time, i, "disrupt" in self.level[i]))
+                disrupt = "disrupt" in self.level[i]
+                broken = self.level[i]["broken"] if "broken" in self.level[i] else {}
+                self.spaceships.add(Spaceship(self.level[i], time, i, disrupt, broken))
 
         self.bg = pg.image.load("./images/space-background.png")
 
@@ -55,12 +57,13 @@ class SpaceshipScene(Scene):
                     self.state["ship_num"] = ship[0].num
                     self.state["curr_time"] = pg.time.get_ticks()
                     self.state["disrupt"] = ship[0].disrupt
+                    self.state["broken"] = ship[0].broken
                     self.manager.go_to(interval.IntervalScene(ship[0].signals, ship[0].lose_time(), self.state))
                 elif self.back.rect.collidepoint(pos):
                     self.manager.go_to(menus.World2Scene(self.state))
 
 class Spaceship(pg.sprite.Sprite):
-    def __init__(self, ship, time, num, disrupt=False):
+    def __init__(self, ship, time, num, disrupt=False, broken={}):
         super().__init__()
         self.signals = ship["signals"]
         self.num = num
@@ -72,8 +75,11 @@ class Spaceship(pg.sprite.Sprite):
         self.rect.x = ship["x"] - time/1000*Settings.FPS/self.limit
         self.rect.y = ship["y"]
         self.disrupt = disrupt
+        self.broken = broken
         if disrupt:
             pg.draw.rect(self.image, (0, 255, 127), pg.Rect(0,0,80,56), 3)
+        if len(broken)>0:
+            pg.draw.polygon(self.image, (255,0,0), [(1,6),(20,12),(1,18)], 3)
 
     def update(self):
         self.cycles += 1
