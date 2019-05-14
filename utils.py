@@ -53,18 +53,22 @@ class Vector(namedtuple('Vector', ['x', 'y'])):
         return self.__mul__(1 / other)
 
 
-class BackButton():
-    def __init__(self):
-        self.font = pygame.font.SysFont('Monospace', 30)
-        self.image = Surface([100, 50])
-        self.rect = self.image.get_rect()
-        self.rect.y = 50
-        self.rect.x = 50
+class Button:
+    def __init__(self, text, position, padding):
+        font = pygame.font.SysFont('Monospace', 30)
+        size = Vector(*font.size(text)) + 2 * Vector(*padding)
+        self.text = font.render(text, True, (255, 255, 255))
+        self.rect = Rect(position, size)
+        self.text_pos = Vector(*position) + Vector(*padding)
 
     def draw(self, screen):
         pygame.draw.rect(screen, (255, 255, 255), self.rect, 3)
-        text = self.font.render("Back", True, (255, 255, 255))
-        screen.blit(text, (60, 55))
+        screen.blit(self.text, self.text_pos)
+
+
+class BackButton(Button):
+    def __init__(self):
+        super().__init__("Back", Vector(50, 50), Vector(10, 5))
 
 
 class HorizontalScrollingGroup(Group):
@@ -108,7 +112,6 @@ class TextBox:
         for p in paragraphs:
             p_lines, _ = self._split_text(
                 p, font, width, font_height, line_spacing, max_height)
-            print(p_lines)
             lines.extend(p_lines)
             lines.append('')
         lines.pop()  # remove last extra line.

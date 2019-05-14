@@ -15,7 +15,7 @@ from pygame.sprite import Group, Sprite
 import menus
 from setup import GameSettings as GS
 from setup import PlatformerSettings as PS
-from utils import HorizontalScrollingGroup, Scene, TextBox, Vector
+from utils import Button, HorizontalScrollingGroup, Scene, TextBox, Vector
 from worlds import World_1
 
 
@@ -42,11 +42,14 @@ class NotePlatformerScene(Scene):
             gem = Gem(note, winner=winner, position=Vector(x, y))
             self.blobs.add(gem)
             self.gems.add(gem)
+            if winner:
+                goal_path = os.path.join("sounds", "long", f"{note}.wav")
+                self.goal_sound = pygame.mixer.Sound(goal_path)
 
         self.channels = {}
 
         self.greeting = TextBox(
-            "Your task is to find the gem whih emits a certain sound.\nYou "
+            "Your task is to find the gem which emits a certain sound.\nYou "
             "can listen to the sound by clicking on this box. You can also "
             "listen to it during the game by clicking on the \"Goal\" button "
             "in the corner.\nClick outside the box to start.",
@@ -54,6 +57,8 @@ class NotePlatformerScene(Scene):
             max_size=(GS.SCREEN_WIDTH * 0.6, GS.SCREEN_HEIGHT * 0.6),
             style=PS.TEXT_STYLE)
         self.started = False
+
+        self.sound_btn = Button("Target sound", Vector(50, 50), Vector(10, 5))
 
     def update(self):
         if not self.started:
@@ -66,27 +71,18 @@ class NotePlatformerScene(Scene):
                 self.player, self.platforms, False):
             self.player.collide(platform)
 
+        if self.player.rect.bottom > GS.SCREEN_HEIGHT:
+            self.quit(win=False)
+
         # Play sound near gems.
         for gem in self.gems:
-            distance = (abs(Vector(*self.player.rect.center)
-                            - Vector(*gem.rect.center))
-                        - PS.BLOB_SIZE)
-            if distance <= PS.SOUND_RADIUS:
-                vol_ratio = 1 - distance / PS.SOUND_RADIUS
-                self._play_gem_sound(gem, vol_ratio)
-            else:
-                self._stop_gem_sound(gem)
+            self.player.listen_to(gem)
 
         # Handle collisions with gems.
         for gem in pygame.sprite.spritecollide(
                 self.player, self.gems, False):
             # End condition.
-            if gem.winner:
-                self.manager.go_to(menus.WinScene(self.state))
-            else:
-                self.manager.go_to(menus.LoseScene(self.state))
-            # Turn off sound.
-            self._stop_all_sounds()
+            self.quit(win=gem.winner)
 
     def handle_events(self, events):
         for event in events:
@@ -95,7 +91,7 @@ class NotePlatformerScene(Scene):
                 if event.type == pygame.MOUSEBUTTONUP:
                     pos = pygame.mouse.get_pos()
                     if self.greeting.rect.collidepoint(pos):
-                        self._play_goal_sound()
+                        self.goal_sound.play()
                     else:
                         self.started = True
                 continue
@@ -116,41 +112,29 @@ class NotePlatformerScene(Scene):
                     self.player.stop_right()
                 elif event.key in PS.JUMP_KEYS:
                     self.player.stop_jump()
+            # Handle clicking sound button.
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if self.sound_btn.rect.collidepoint(pygame.mouse.get_pos()):
+                    self.goal_sound.play()
 
     def render(self, screen):
         screen.fill(PS.BG_COLOR)
         self.blobs.draw(screen)
+        self.sound_btn.draw(screen)
         if not self.started:
             overlay = Surface(screen.get_size(), pygame.SRCALPHA)
             overlay.fill(PS.OVERLAY_COLOR)
             screen.blit(overlay, (0, 0))
             self.greeting.draw(screen)
 
-    def _play_goal_sound(self):
-        winning_gems = (gem for gem in self.gems if gem.winner)
-        try:
-            gem = next(winning_gems)
-        except StopIteration:
-            raise RuntimeError("no winning gem")
-        self._play_gem_sound(gem, 1, loop=False)
-
-    def _play_gem_sound(self, gem, volume, loop=True):
-        if gem not in self.channels or self.channels[gem].get_sound() is None:
-            channel = pygame.mixer.find_channel()
-            if channel is None:
-                raise RuntimeError("no free audio channel found")
-            self.channels[gem] = channel
-            channel.play(gem.sound, loops=-1 if loop else 0)
-        self.channels[gem].set_volume(volume)
-
-    def _stop_gem_sound(self, gem):
-        if gem in self.channels:
-            self.channels[gem].stop()
-            del self.channels[gem]
-
-    def _stop_all_sounds(self):
-        for channel in self.channels.values():
-            channel.stop()
+    def quit(self, win):
+        for gem in self.gems:
+            gem.sound.stop()
+        if win:
+            self.state["level_progress"][self.state["world"]] = (
+                self.state["level"] + 1)
+        next_scene = menus.WinScene if win else menus.LoseScene
+        self.manager.go_to(next_scene(self.state))
 
 
 class Blob(Sprite):
@@ -199,6 +183,12 @@ class Blob(Sprite):
             self.position += Vector(0, dy)
 
         self._normalize()
+
+    @staticmethod
+    def distance(blob1, blob2):
+        p1 = Vector(*blob1.rect.center)
+        p2 = Vector(*blob2.rect.center)
+        return abs(p1 - p2) / PS.PPU
 
 
 class RectBlob(Blob):
@@ -262,6 +252,18 @@ class Player(RectBlob):
     def stop_jump(self):
         self.jump_frames = 0
 
+    def listen_to(self, gem):
+        distance = Blob.distance(self, gem) - PS.BLOB_SIZE
+        if distance <= PS.SOUND_RADIUS:
+            if not gem.playing:
+                gem.sound.play(loops=-1)
+                gem.playing = True
+            vol_ratio = 1 - distance / PS.SOUND_RADIUS
+            gem.sound.set_volume(vol_ratio)
+        else:
+            gem.sound.stop()
+            gem.playing = False
+
 
 class Gem(ImageBlob):
     def __init__(self, note, winner=False, **kwargs):
@@ -269,28 +271,8 @@ class Gem(ImageBlob):
         super().__init__(file=file, **kwargs)
         self.note = note
         self.winner = winner
+        self.playing = False
 
         # Get sound for this note.
         sound_path = os.path.join("sounds", "short", f"{note}.wav")
         self.sound = pygame.mixer.Sound(sound_path)
-
-
-class WelcomeText:
-    def __init__(self):
-        font = pygame.font.SysFont(PS.FONT_FACE, PS.FONT_SIZE)
-        text = "Objective: find the gem with this sound (click to play)"
-        text_image = font.render(text, True, PS.TEXT_COLOR)
-        margin = PS.TEXT_MARGIN
-        size = Vector(*text_image.get_size())
-        size += 2 * margin
-        self.image = Surface(size)
-        self.image.fill(PS.TEXT_BG_COLOR)
-        self.image.blit(text_image, margin)
-        self.rect = self.image.get_rect()
-
-    def draw(self, screen):
-        offset = Vector(*screen.get_size()) / 2
-        offset -= Vector(*self.image.get_size()) / 2
-        screen.blit(self.image, offset)
-        self.rect = self.image.get_rect()
-        self.rect.move_ip(*offset)
