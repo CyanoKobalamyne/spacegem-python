@@ -43,7 +43,7 @@ class NotePlatformerScene(Scene):
             self.blobs.add(gem)
             self.gems.add(gem)
             if winner:
-                goal_path = os.path.join("sounds", "short", f"{note}.wav")
+                goal_path = os.path.join("sounds", "long", f"{note}.wav")
                 self.goal_sound = pygame.mixer.Sound(goal_path)
 
         self.channels = {}
@@ -73,14 +73,7 @@ class NotePlatformerScene(Scene):
 
         # Play sound near gems.
         for gem in self.gems:
-            distance = (abs(Vector(*self.player.rect.center)
-                            - Vector(*gem.rect.center)) / PS.PPU
-                        - PS.BLOB_SIZE)
-            if distance <= PS.SOUND_RADIUS:
-                vol_ratio = 1 - distance / PS.SOUND_RADIUS
-                self._play_gem_sound(gem, vol_ratio)
-            else:
-                self._stop_gem_sound(gem)
+            self.player.listen_to(gem)
 
         # Handle collisions with gems.
         for gem in pygame.sprite.spritecollide(
@@ -91,7 +84,8 @@ class NotePlatformerScene(Scene):
             else:
                 self.manager.go_to(menus.LoseScene(self.state))
             # Turn off sound.
-            self._stop_all_sounds()
+            for gem in self.gems:
+                gem.sound.stop()
 
     def handle_events(self, events):
         for event in events:
@@ -135,17 +129,6 @@ class NotePlatformerScene(Scene):
             overlay.fill(PS.OVERLAY_COLOR)
             screen.blit(overlay, (0, 0))
             self.greeting.draw(screen)
-
-    def _play_gem_sound(self, gem, volume, loop=True):
-        gem.sound.set_volume(volume)
-        gem.sound.play(loops=-1 if loop else 0)
-
-    def _stop_gem_sound(self, gem):
-        gem.sound.stop()
-
-    def _stop_all_sounds(self):
-        for gem in self.gems:
-            gem.sound.stop()
 
 
 class Blob(Sprite):
@@ -194,6 +177,12 @@ class Blob(Sprite):
             self.position += Vector(0, dy)
 
         self._normalize()
+
+    @staticmethod
+    def distance(blob1, blob2):
+        p1 = Vector(*blob1.rect.center)
+        p2 = Vector(*blob2.rect.center)
+        return abs(p1 - p2) / PS.PPU
 
 
 class RectBlob(Blob):
@@ -257,6 +246,18 @@ class Player(RectBlob):
     def stop_jump(self):
         self.jump_frames = 0
 
+    def listen_to(self, gem):
+        distance = Blob.distance(self, gem) - PS.BLOB_SIZE
+        if distance <= PS.SOUND_RADIUS:
+            if not gem.playing:
+                gem.sound.play(loops=-1)
+                gem.playing = True
+            vol_ratio = 1 - distance / PS.SOUND_RADIUS
+            gem.sound.set_volume(vol_ratio)
+        else:
+            gem.sound.stop()
+            gem.playing = False
+
 
 class Gem(ImageBlob):
     def __init__(self, note, winner=False, **kwargs):
@@ -264,7 +265,8 @@ class Gem(ImageBlob):
         super().__init__(file=file, **kwargs)
         self.note = note
         self.winner = winner
+        self.playing = False
 
         # Get sound for this note.
-        sound_path = os.path.join("sounds", "long", f"{note}.wav")
+        sound_path = os.path.join("sounds", "short", f"{note}.wav")
         self.sound = pygame.mixer.Sound(sound_path)
