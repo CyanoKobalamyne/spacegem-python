@@ -42,6 +42,9 @@ class NotePlatformerScene(Scene):
             gem = Gem(note, winner=winner, position=Vector(x, y))
             self.blobs.add(gem)
             self.gems.add(gem)
+            if winner:
+                goal_path = os.path.join("sounds", "short", f"{note}.wav")
+                self.goal_sound = pygame.mixer.Sound(goal_path)
 
         self.channels = {}
 
@@ -97,7 +100,7 @@ class NotePlatformerScene(Scene):
                 if event.type == pygame.MOUSEBUTTONUP:
                     pos = pygame.mouse.get_pos()
                     if self.greeting.rect.collidepoint(pos):
-                        self._play_goal_sound()
+                        self.goal_sound.play()
                     else:
                         self.started = True
                 continue
@@ -118,6 +121,10 @@ class NotePlatformerScene(Scene):
                     self.player.stop_right()
                 elif event.key in PS.JUMP_KEYS:
                     self.player.stop_jump()
+            # Handle clicking sound button.
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if self.sound_btn.rect.collidepoint(pygame.mouse.get_pos()):
+                    self.goal_sound.play()
 
     def render(self, screen):
         screen.fill(PS.BG_COLOR)
@@ -129,31 +136,16 @@ class NotePlatformerScene(Scene):
             screen.blit(overlay, (0, 0))
             self.greeting.draw(screen)
 
-    def _play_goal_sound(self):
-        winning_gems = (gem for gem in self.gems if gem.winner)
-        try:
-            gem = next(winning_gems)
-        except StopIteration:
-            raise RuntimeError("no winning gem")
-        self._play_gem_sound(gem, 1, loop=False)
-
     def _play_gem_sound(self, gem, volume, loop=True):
-        if gem not in self.channels or self.channels[gem].get_sound() is None:
-            channel = pygame.mixer.find_channel()
-            if channel is None:
-                raise RuntimeError("no free audio channel found")
-            self.channels[gem] = channel
-            channel.play(gem.sound, loops=-1 if loop else 0)
-        self.channels[gem].set_volume(volume)
+        gem.sound.set_volume(volume)
+        gem.sound.play(loops=-1 if loop else 0)
 
     def _stop_gem_sound(self, gem):
-        if gem in self.channels:
-            self.channels[gem].stop()
-            del self.channels[gem]
+        gem.sound.stop()
 
     def _stop_all_sounds(self):
-        for channel in self.channels.values():
-            channel.stop()
+        for gem in self.gems:
+            gem.sound.stop()
 
 
 class Blob(Sprite):
@@ -274,5 +266,5 @@ class Gem(ImageBlob):
         self.winner = winner
 
         # Get sound for this note.
-        sound_path = os.path.join("sounds", "short", f"{note}.wav")
+        sound_path = os.path.join("sounds", "long", f"{note}.wav")
         self.sound = pygame.mixer.Sound(sound_path)
