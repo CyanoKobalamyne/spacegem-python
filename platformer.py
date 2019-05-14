@@ -273,24 +273,3 @@ class Gem(ImageBlob):
         # Get sound for this note.
         sound_path = os.path.join("sounds", "short", f"{note}.wav")
         self.sound = pygame.mixer.Sound(sound_path)
-
-
-class WelcomeText:
-    def __init__(self):
-        font = pygame.font.SysFont(PS.FONT_FACE, PS.FONT_SIZE)
-        text = "Objective: find the gem with this sound (click to play)"
-        text_image = font.render(text, True, PS.TEXT_COLOR)
-        margin = PS.TEXT_MARGIN
-        size = Vector(*text_image.get_size())
-        size += 2 * margin
-        self.image = Surface(size)
-        self.image.fill(PS.TEXT_BG_COLOR)
-        self.image.blit(text_image, margin)
-        self.rect = self.image.get_rect()
-
-    def draw(self, screen):
-        offset = Vector(*screen.get_size()) / 2
-        offset -= Vector(*self.image.get_size()) / 2
-        screen.blit(self.image, offset)
-        self.rect = self.image.get_rect()
-        self.rect.move_ip(*offset)
