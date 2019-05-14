@@ -71,6 +71,9 @@ class NotePlatformerScene(Scene):
                 self.player, self.platforms, False):
             self.player.collide(platform)
 
+        if self.player.rect.bottom > GS.SCREEN_HEIGHT:
+            self.quit(win=False)
+
         # Play sound near gems.
         for gem in self.gems:
             self.player.listen_to(gem)
@@ -79,13 +82,7 @@ class NotePlatformerScene(Scene):
         for gem in pygame.sprite.spritecollide(
                 self.player, self.gems, False):
             # End condition.
-            if gem.winner:
-                self.manager.go_to(menus.WinScene(self.state))
-            else:
-                self.manager.go_to(menus.LoseScene(self.state))
-            # Turn off sound.
-            for gem in self.gems:
-                gem.sound.stop()
+            self.quit(win=gem.winner)
 
     def handle_events(self, events):
         for event in events:
@@ -129,6 +126,12 @@ class NotePlatformerScene(Scene):
             overlay.fill(PS.OVERLAY_COLOR)
             screen.blit(overlay, (0, 0))
             self.greeting.draw(screen)
+
+    def quit(self, win):
+        for gem in self.gems:
+            gem.sound.stop()
+        next_scene = menus.WinScene if win else menus.LoseScene
+        self.manager.go_to(next_scene(self.state))
 
 
 class Blob(Sprite):
