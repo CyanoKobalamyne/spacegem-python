@@ -25,7 +25,7 @@ class PlatformerSettings:
     LEFT_KEYS = {pygame.K_LEFT, pygame.K_a}
     RIGHT_KEYS = {pygame.K_RIGHT, pygame.K_d}
     JUMP_KEYS = {pygame.K_UP, pygame.K_w, pygame.K_SPACE}
-    TEXT_BGCOLOR = Color('white')
+    TEXT_BGCOLOR = Color('black')
     TEXT_STYLE = {
         "text": {
             "margin": Vector(10, 5),
@@ -34,9 +34,9 @@ class PlatformerSettings:
             "spacing": 10,
         },
         "font": {
-            "family": 'Arial',
+            "family": 'Monospace',
             "size": 24,
-            "color": Color('black'),
+            "color": Color('white'),
         }
     }
     OVERLAY_COLOR = Color(255, 255, 255, 127)
