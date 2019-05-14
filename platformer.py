@@ -9,6 +9,7 @@ import pygame.mixer
 import pygame.mouse
 import pygame.sprite
 import pygame.time
+import pygame.transform
 from pygame import Color, Surface
 from pygame.sprite import Group, Sprite
 
@@ -198,14 +199,24 @@ class Platform(RectBlob):
 
 class Player(ImageBlob):
     def __init__(self, **kwargs):
-        super().__init__(file=os.path.join("images", "maincharacter_right1_rescaled2.png"), **kwargs)
+        super().__init__(file=os.path.join("images", "player.png"), **kwargs)
+        self.img_normal = self.image
+        self.img_reflected = pygame.transform.flip(self.image, True, False)
         self.jump_frames = 0
 
     def update(self):
+        # Handle jumping and gravity.
         if self.jump_frames > 0:
             self.jump_frames -= 1
         else:
             self.velocity += PS.GRAVITY * PS.PPU / GS.FPS
+
+        # Handle orientation.
+        if self.velocity.x > 0:
+            self.image = self.img_normal
+        elif self.velocity.x < 0:
+            self.image = self.img_reflected
+
         super().update()
 
     def can_jump(self, platforms):
