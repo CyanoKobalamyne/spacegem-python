@@ -46,7 +46,7 @@ class NotePlatformerScene(Scene):
         self.channels = {}
 
         self.greeting = TextBox(
-            "Your task is to find the gem whih emits a certain sound.\nYou "
+            "Your task is to find the gem which emits a certain sound.\nYou "
             "can listen to the sound by clicking on this box. You can also "
             "listen to it during the game by clicking on the \"Goal\" button "
             "in the corner.\nClick outside the box to start.",
