@@ -1,7 +1,16 @@
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from numbers import Number
+<<<<<<< HEAD
+
+import pygame.draw
+import pygame.font
+from pygame import Rect, Surface
+from pygame.sprite import Group
+
+=======
 import pygame as pg
+>>>>>>> varunm22/spacegem-python/master
 
 class Scene(ABC):
     @abstractmethod
@@ -47,18 +56,46 @@ class Vector(namedtuple('Vector', ['x', 'y'])):
     def __truediv__(self, other):
         return self.__mul__(1 / other)
 
+
 class BackButton():
     def __init__(self):
-        self.font = pg.font.SysFont('Monospace', 30)
-        self.image = pg.Surface([100, 50])
+        self.font = pygame.font.SysFont('Monospace', 30)
+        self.image = Surface([100, 50])
         self.rect = self.image.get_rect()
         self.rect.y = 50
         self.rect.x = 50
 
     def draw(self, screen):
-        pg.draw.rect(screen, (255,255,255), self.rect, 3)
+        pygame.draw.rect(screen, (255, 255, 255), self.rect, 3)
         text = self.font.render("Back", True, (255, 255, 255))
-        screen.blit(text, (60,55))
+        screen.blit(text, (60, 55))
+
+
+class HorizontalScrollingGroup(Group):
+    def __init__(self, target, screen_size, world_size, margin, *sprites):
+        super().__init__(*sprites)
+        self.target = target
+        self.margin = margin
+        self.world_size = world_size
+        self.camera = Rect(0, 0, *screen_size)
+
+        self.add(target)
+
+    def update(self, *args):
+        super().update(*args)
+        if self.target.rect.left < self.camera.left + self.margin:
+            self.camera.left = max(0, self.target.rect.left - self.margin)
+        elif self.camera.right - self.margin < self.target.rect.right:
+            self.camera.right = min(self.target.rect.right + self.margin,
+                                    self.world_size[0])
+
+    def draw(self, surface):
+        sprites = self.sprites()
+        for spr in sprites:
+            new_rect = spr.rect.move(-Vector(*self.camera.topleft))
+            self.spritedict[spr] = surface.blit(spr.image, new_rect)
+        self.lostsprites = []
+
 
 def get_image(file):
     image = pg.image.load(file).convert_alpha()

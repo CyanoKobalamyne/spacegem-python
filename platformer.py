@@ -1,7 +1,10 @@
 """Platformer scene for Level 1."""
+import os
+
 import pygame.display
 import pygame.event
 import pygame.font
+import pygame.image
 import pygame.mixer
 import pygame.mouse
 import pygame.sprite
@@ -10,22 +13,25 @@ from pygame import Color, Surface
 from pygame.sprite import Group, Sprite
 
 import menus
-from setup import PlatformerSettings as Settings
-from utils import Scene, Vector
+from setup import GameSettings as GS
+from setup import PlatformerSettings as PS
+from utils import HorizontalScrollingGroup, Scene, Vector
 from worlds import World_1
 
 
 class NotePlatformerScene(Scene):
     def __init__(self, state):
+        level = getattr(World_1, f"Level_{state['level'] + 1}")
+
         self.state = state
+        self.player = Player(position=Vector(*level.player))
+
         self.platforms = Group()
         self.gems = Group()
-        self.blobs = Group()
-        self.player = Player(position=Vector(
-            3 * Settings.BLOB_SIZE,
-            Settings.SCREEN_HEIGHT - 2 * Settings.BLOB_SIZE))
-
-        level = getattr(World_1, f"Level_{self.state['level'] + 1}")
+        level_width = PS.PPU * max(map(lambda p: p[0] + p[2], level.platforms))
+        self.blobs = HorizontalScrollingGroup(
+            self.player, (GS.SCREEN_WIDTH, GS.SCREEN_HEIGHT),
+            (level_width, GS.SCREEN_HEIGHT), PS.SCROLL_MARGIN * PS.PPU)
 
         for x, y, width, height in level.platforms:
             platform = Platform(width=width, height=height,
@@ -36,7 +42,6 @@ class NotePlatformerScene(Scene):
             gem = Gem(note, winner=winner, position=Vector(x, y))
             self.blobs.add(gem)
             self.gems.add(gem)
-        self.blobs.add(self.player)
 
         self.channels = {}
 
@@ -56,10 +61,10 @@ class NotePlatformerScene(Scene):
 
         # Play sound near gems.
         for gem in self.gems:
-            distance = (abs(self.player.center - gem.center)
-                        - Settings.BLOB_SIZE)
-            if distance <= Settings.SOUND_RADIUS:
-                vol_ratio = 1 - distance / Settings.SOUND_RADIUS
+            distance = (abs(Vector(*self.player.rect.center) - Vector(*gem.rect.center))
+                        - PS.BLOB_SIZE)
+            if distance <= PS.SOUND_RADIUS:
+                vol_ratio = 1 - distance / PS.SOUND_RADIUS
                 self._play_gem_sound(gem, vol_ratio)
             else:
                 self._stop_gem_sound(gem)
@@ -87,27 +92,24 @@ class NotePlatformerScene(Scene):
                 continue
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
+                if event.key in PS.LEFT_KEYS:
                     self.player.go_left()
-                if event.key == pygame.K_RIGHT:
+                elif event.key in PS.RIGHT_KEYS:
                     self.player.go_right()
-                if event.key == pygame.K_UP:
-                    # Check if there are platforms underneath.
-                    self.player.position += Vector(0, 2)
-                    self.player._normalize()
-                    can_jump = len(pygame.sprite.spritecollide(
-                        self.player, self.platforms, False)) > 0
-                    self.player.position -= Vector(0, 2)
-                    self.player._normalize()
-                    if can_jump:
+                elif event.key in PS.JUMP_KEYS:
+                    if self.player.can_jump(self.platforms):
                         self.player.jump()
 
             if event.type == pygame.KEYUP:
-                if event.key in {pygame.K_LEFT, pygame.K_RIGHT}:
-                    self.player.stop()
+                if event.key in PS.LEFT_KEYS:
+                    self.player.stop_left()
+                elif event.key in PS.RIGHT_KEYS:
+                    self.player.stop_right()
+                elif event.key in PS.JUMP_KEYS:
+                    self.player.stop_jump()
 
     def render(self, screen):
-        screen.fill(Settings.BG_COLOR)
+        screen.fill(PS.BG_COLOR)
         self.blobs.draw(screen)
         if self.at_welcome:
             self.welcome.draw(screen)
@@ -140,41 +142,40 @@ class NotePlatformerScene(Scene):
 
 
 class Blob(Sprite):
-    def __init__(self, width, height, color, position, velocity=Vector(0, 0)):
+    def __init__(self, position, velocity=Vector(0, 0)):
         super().__init__()
-        self.width = width
-        self.height = height
         self.position = position
         self.velocity = velocity
-
-        self.image = Surface((width, height))
-        self.image.fill(Color(color))
         self.rect = self.image.get_rect()
-
         self._normalize()
 
     def _normalize(self):
-        pos_diff = self.position - Vector(self.rect.x, self.rect.y)
-        self.rect.move_ip(*pos_diff)
-        diagonal = Vector(self.width, self.height)
-        self.center = self.position + diagonal / 2
+        rect_position = Vector(self.rect.x, self.rect.y) / PS.PPU
+        pos_diff = self.position - rect_position
+        self.rect.move_ip(*(pos_diff * PS.PPU))
 
     def update(self):
-        self.position += self.velocity / Settings.FPS
+        self.position += self.velocity / GS.FPS
         self._normalize()
+
+    def width(self):
+        return self.rect.width / PS.PPU
+
+    def height(self):
+        return self.rect.height / PS.PPU
 
     def collide(self, other):
         if self.velocity.x > 0:
-            dx = other.position.x - (self.position.x + self.width)
+            dx = other.position.x - (self.position.x + self.width())
         elif self.velocity.x < 0:
-            dx = (other.position.x + other.width) - self.position.x
+            dx = (other.position.x + other.width()) - self.position.x
         else:
             dx = 0
 
         if self.velocity.y > 0:
-            dy = other.position.y - (self.position.y + self.height)
+            dy = other.position.y - (self.position.y + self.height())
         elif self.velocity.y < 0:
-            dy = self.position.y - (other.position.y + other.height)
+            dy = self.position.y - (other.position.y + other.height())
         else:
             dy = 0
 
@@ -188,58 +189,90 @@ class Blob(Sprite):
         self._normalize()
 
 
-class FallingBlob(Blob):
-    def update(self):
-        self.velocity += Settings.GRAVITY
-        super().update()
+class RectBlob(Blob):
+    def __init__(self, width, height, color, **kwargs):
+        self.image = Surface((width * PS.PPU, height * PS.PPU))
+        self.image.fill(Color(color))
+        super().__init__(**kwargs)
 
 
-class Platform(Blob):
+class ImageBlob(Blob):
+    def __init__(self, file, **kwargs):
+        self.image = pygame.image.load(file).convert_alpha()
+        super().__init__(**kwargs)
+
+
+class Platform(RectBlob):
     def __init__(self, **kwargs):
         super().__init__(color='blue', **kwargs)
 
 
-class Player(FallingBlob):
+class Player(RectBlob):
     def __init__(self, **kwargs):
-        super().__init__(width=Settings.BLOB_SIZE, height=Settings.BLOB_SIZE,
-                         color='black', **kwargs)
+        super().__init__(width=PS.BLOB_SIZE, height=PS.BLOB_SIZE,
+                         color='white', **kwargs)
+        self.jump_frames = 0
+
+    def update(self):
+        if self.jump_frames > 0:
+            self.jump_frames -= 1
+        else:
+            self.velocity += PS.GRAVITY / GS.FPS
+        super().update()
+
+    def can_jump(self, platforms):
+        self.position += Vector(0, 2) / PS.PPU
+        self._normalize()
+        n_platforms = len(pygame.sprite.spritecollide(
+            self, platforms, False))
+        self.position -= Vector(0, 2) / PS.PPU
+        self._normalize()
+        return n_platforms > 0
 
     def go_left(self):
-        self.velocity = Vector(-Settings.RUN_SPEED, self.velocity.y)
+        self.velocity = Vector(-PS.RUN_SPEED, self.velocity.y)
 
     def go_right(self):
-        self.velocity = Vector(Settings.RUN_SPEED, self.velocity.y)
+        self.velocity = Vector(PS.RUN_SPEED, self.velocity.y)
 
     def jump(self):
-        self.velocity = Vector(self.velocity.x, -Settings.JUMP_SPEED)
+        self.velocity = Vector(self.velocity.x, -PS.JUMP_SPEED)
+        self.jump_frames = PS.JUMP_TIME * GS.FPS
 
-    def stop(self):
-        self.velocity = Vector(0, self.velocity.y)
+    def stop_left(self):
+        if self.velocity.x < 0:
+            self.velocity = Vector(0, self.velocity.y)
+
+    def stop_right(self):
+        if self.velocity.x > 0:
+            self.velocity = Vector(0, self.velocity.y)
+
+    def stop_jump(self):
+        self.jump_frames = 0
 
 
-class Gem(Blob):
+class Gem(ImageBlob):
     def __init__(self, note, winner=False, **kwargs):
-        color = 'green' if winner else 'red'
-        super().__init__(width=Settings.BLOB_SIZE, height=Settings.BLOB_SIZE,
-                         color=color, **kwargs)
+        file = os.path.join('images', f'{note}_gem.png')
+        super().__init__(file=file, **kwargs)
         self.note = note
         self.winner = winner
 
         # Get sound for this note.
-        sound_path = f"./sounds/short/{note}.wav"
+        sound_path = os.path.join("sounds", "short", f"{note}.wav")
         self.sound = pygame.mixer.Sound(sound_path)
 
 
 class WelcomeText:
     def __init__(self):
-        font = pygame.font.SysFont(Settings.FONT_FACE, Settings.FONT_SIZE)
+        font = pygame.font.SysFont(PS.FONT_FACE, PS.FONT_SIZE)
         text = "Objective: find the gem with this sound (click to play)"
-        text_image = font.render(text, True, Settings.TEXT_COLOR)
-        margin = Settings.TEXT_MARGIN
+        text_image = font.render(text, True, PS.TEXT_COLOR)
+        margin = PS.TEXT_MARGIN
         size = Vector(*text_image.get_size())
         size += 2 * margin
         self.image = Surface(size)
-        self.image.fill(Settings.TEXT_BG_COLOR)
+        self.image.fill(PS.TEXT_BG_COLOR)
         self.image.blit(text_image, margin)
         self.rect = self.image.get_rect()
 
@@ -249,31 +282,3 @@ class WelcomeText:
         screen.blit(self.image, offset)
         self.rect = self.image.get_rect()
         self.rect.move_ip(*offset)
-
-
-def main():
-    pygame.init()
-
-    size = (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT)
-    screen = pygame.display.set_mode(size)
-    pygame.display.set_caption('Test platformer')
-
-    level = NotePlatformerScene()
-    clock = pygame.time.Clock()
-
-    while True:
-        events = pygame.event.get()
-        if any(event.type == pygame.QUIT for event in events):
-            break
-
-        level.handle_events(events)
-        level.update()
-        level.render(screen)
-        clock.tick(Settings.FPS)
-        pygame.display.flip()
-
-    pygame.quit()
-
-
-if __name__ == "__main__":
-    main()
