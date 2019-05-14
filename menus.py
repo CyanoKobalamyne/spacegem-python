@@ -11,7 +11,7 @@ class TitleScene(Scene):
         super(TitleScene, self).__init__()
         self.sfont = pg.font.SysFont('Monospace', 32)
         self.state = {"level_progress": [0,0,0], "num_levels": [0,0,0]}
-        # TODO: load number of levels from data for world 1!!
+        self.state["num_levels"][0] = 1
         self.state["num_levels"][1] = len(pickle.load(open("levels", "rb")))
 
     def render(self, screen):
@@ -65,8 +65,8 @@ class World1Scene(Scene):
         self.font = pg.font.SysFont('Monospace', 70)
         self.back = BackButton()
         self.levelsquares = pg.sprite.Group()
-        for i in range(self.state["num_levels"][1]):
-            available = (i <= self.state["level_progress"][1])
+        for i in range(self.state["num_levels"][0]):
+            available = (i <= self.state["level_progress"][0])
             self.levelsquares.add(LevelSquare(50+150*i, 300, i, available))
 
     def render(self, screen):
