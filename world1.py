@@ -34,5 +34,5 @@ class Level_2:
     ]
     gems = [
         (6, 2, 6, False),
-        (21, 2, 2, True),
+        (21, 2, 4, True),
     ]
