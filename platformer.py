@@ -253,7 +253,7 @@ class Player(RectBlob):
 
 class Gem(ImageBlob):
     def __init__(self, note, winner=False, **kwargs):
-        file = os.path.join('images', f'{note}_gem.png')
+        file = os.path.join('images', f'gem{note}.png')
         super().__init__(file=file, **kwargs)
         self.note = note
         self.winner = winner
