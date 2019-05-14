@@ -140,49 +140,35 @@ class NotePlatformerScene(Scene):
 class Blob(Sprite):
     def __init__(self, position, velocity=Vector(0, 0)):
         super().__init__()
-        self.position = position
-        self.velocity = velocity
+        self.velocity = velocity * PS.PPU
         self.rect = self.image.get_rect()
-        self._normalize()
-
-    def _normalize(self):
-        rect_position = Vector(self.rect.x, self.rect.y) / PS.PPU
-        pos_diff = self.position - rect_position
-        self.rect.move_ip(*(pos_diff * PS.PPU))
+        self.rect.move_ip(position * PS.PPU)
 
     def update(self):
-        self.position += self.velocity / GS.FPS
-        self._normalize()
-
-    def width(self):
-        return self.rect.width / PS.PPU
-
-    def height(self):
-        return self.rect.height / PS.PPU
+        self.rect.x += self.velocity.x / GS.FPS
+        self.rect.y += self.velocity.y / GS.FPS
 
     def collide(self, other):
         if self.velocity.x > 0:
-            dx = other.position.x - (self.position.x + self.width())
+            dx = other.rect.left - self.rect.right
         elif self.velocity.x < 0:
-            dx = (other.position.x + other.width()) - self.position.x
+            dx = other.rect.right - self.rect.left
         else:
-            dx = 0
+            dx = None
 
         if self.velocity.y > 0:
-            dy = other.position.y - (self.position.y + self.height())
+            dy = other.rect.top - self.rect.bottom
         elif self.velocity.y < 0:
-            dy = self.position.y - (other.position.y + other.height())
+            dy = self.rect.top - other.rect.bottom
         else:
-            dy = 0
+            dy = None
 
-        if dy == 0 or abs(dx) <= abs(dy):
+        if dx is not None and (dy is None or abs(dx) <= abs(dy)):
             self.velocity = Vector(0, self.velocity.y)
-            self.position += Vector(dx, 0)
-        if dx == 0 or abs(dy) <= abs(dx):
+            self.rect.x += dx
+        if dy is not None and (dx is None or abs(dy) <= abs(dx)):
             self.velocity = Vector(self.velocity.x, 0)
-            self.position += Vector(0, dy)
-
-        self._normalize()
+            self.rect.y += dy
 
     @staticmethod
     def distance(blob1, blob2):
@@ -220,26 +206,24 @@ class Player(RectBlob):
         if self.jump_frames > 0:
             self.jump_frames -= 1
         else:
-            self.velocity += PS.GRAVITY / GS.FPS
+            self.velocity += PS.GRAVITY * PS.PPU / GS.FPS
         super().update()
 
     def can_jump(self, platforms):
-        self.position += Vector(0, 2) / PS.PPU
-        self._normalize()
+        self.rect.y += 2
         n_platforms = len(pygame.sprite.spritecollide(
             self, platforms, False))
-        self.position -= Vector(0, 2) / PS.PPU
-        self._normalize()
+        self.rect.y -= 2
         return n_platforms > 0
 
     def go_left(self):
-        self.velocity = Vector(-PS.RUN_SPEED, self.velocity.y)
+        self.velocity = Vector(-PS.RUN_SPEED * PS.PPU, self.velocity.y)
 
     def go_right(self):
-        self.velocity = Vector(PS.RUN_SPEED, self.velocity.y)
+        self.velocity = Vector(PS.RUN_SPEED * PS.PPU, self.velocity.y)
 
     def jump(self):
-        self.velocity = Vector(self.velocity.x, -PS.JUMP_SPEED)
+        self.velocity = Vector(self.velocity.x, -PS.JUMP_SPEED * PS.PPU)
         self.jump_frames = PS.JUMP_TIME * GS.FPS
 
     def stop_left(self):
