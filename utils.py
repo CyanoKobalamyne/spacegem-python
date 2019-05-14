@@ -1,12 +1,16 @@
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from numbers import Number
+<<<<<<< HEAD
 
 import pygame.draw
 import pygame.font
 from pygame import Rect, Surface
 from pygame.sprite import Group
 
+=======
+import pygame as pg
+>>>>>>> varunm22/spacegem-python/master
 
 class Scene(ABC):
     @abstractmethod
@@ -91,3 +95,8 @@ class HorizontalScrollingGroup(Group):
             new_rect = spr.rect.move(-Vector(*self.camera.topleft))
             self.spritedict[spr] = surface.blit(spr.image, new_rect)
         self.lostsprites = []
+
+
+def get_image(file):
+    image = pg.image.load(file).convert_alpha()
+    return image

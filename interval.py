@@ -21,13 +21,12 @@ PURPLE = (150, 0, 255)
 GEM_COLORS = [RED, ORANGE, YELLOW, GREEN, TEAL, BLUE, PURPLE, RED]
 
 
-class Gem(pg.sprite.Sprite): 
+class Gem(pg.sprite.Sprite):
     def __init__(self, x, y, tone):
         super().__init__()
 
-        self.image = pg.Surface([40, 40])
-        self.image.fill(GEM_COLORS[tone])
-     
+        self.image = get_image("./images/gem"+ str(tone) +".png").subsurface(pg.Rect(0,0,56,58))
+
         self.rect = self.image.get_rect()
         self.rect.y = y
         self.rect.x = x
@@ -40,11 +39,12 @@ class IntervalScene(Scene):
 
         self.sprites = pg.sprite.Group()
         self.flag = ErrorFlag()
+        self.timeremaining = TimeRemaining(lose_time)
         self.sprites.add(self.flag)
         self.sound = SoundDisplay(self.flag)
         self.gems = pg.sprite.Group()
         for i in range(8):
-            self.gems.add(Gem(60 + i*60, 450, i))
+            self.gems.add(Gem(52 + i*60, 440, i))
         self.signals = signals
         self.sound.signal = signals[0]
         self.interval_num = 0
@@ -53,19 +53,34 @@ class IntervalScene(Scene):
         self.state = state
 
         pg.mixer.init()
-        self.channel = pg.mixer.find_channel()
-        self.play_notes(self.channel,self.sound.signal)
+        self.gem_channel = pg.mixer.find_channel()
+        self.sig_channel = pg.mixer.find_channel()
+        self.play_notes(self.sig_channel,self.sound.signal)
+
+        self.new_mouse_gem = False
+        self.mouseover = 0
 
         self.bg = pg.image.load("./images/transmission-background.png")
 
     def render(self, screen):
-        print(self.lose_time, pg.time.get_ticks(), self.state["curr_time"])
         if pg.time.get_ticks() - self.state["curr_time"] > self.lose_time:
             self.manager.go_to(menus.LoseScene(self.state))
         screen.blit(self.bg, (0,0))
         self.gems.draw(screen)
-        self.sound.draw(screen)
+        self.sound.draw(screen, self.state["disrupt"])
         self.sprites.draw(screen)
+        self.timeremaining.draw(screen, self.lose_time-(pg.time.get_ticks() - self.state["curr_time"]))
+        gem = self.mouse_gem()
+        if len(gem) > 0 and (self.mouseover != gem[0].tone):
+            self.mouseover = gem[0].tone
+            self.new_mouse_gem = True
+        elif len(gem) == 0 and self.mouseover >= 0:
+            self.mouseover = -1
+            self.gem_channel.stop()
+        if self.new_mouse_gem:
+            self.play_notes(self.gem_channel,[self.mouseover], long_note = True)
+            self.new_mouse_gem = False
+
 
     def update(self):
         pass
@@ -74,9 +89,8 @@ class IntervalScene(Scene):
         for e in events:
             if e.type == pg.MOUSEBUTTONUP:
                 pos = pg.mouse.get_pos()
-                gem = [g for g in self.gems if g.rect.collidepoint(pos)]
+                gem = self.mouse_gem()
                 if len(gem) > 0:
-                    self.play_notes(self.channel,[gem[0].tone])
                     correct = self.sound.update_text(gem[0].tone)
                     if correct:
                         self.interval_num += 1
@@ -87,15 +101,25 @@ class IntervalScene(Scene):
                             self.state["curr_time"] = pg.time.get_ticks()
                             from spaceships import SpaceshipScene
                             self.manager.go_to(SpaceshipScene(self.state))
-                        self.play_notes(self.channel,self.sound.signal)
+                        self.play_notes(self.sig_channel,self.sound.signal)
                 elif pg.Rect(160, 340, 190, 38).collidepoint(pos):
-                    self.play_notes(self.channel,self.sound.signal)
+                    self.play_notes(self.sig_channel,self.sound.signal)
+
+
+    def mouse_gem(self):
+        pos = pg.mouse.get_pos()
+        gem = [g for g in self.gems if g.rect.collidepoint(pos)]
+        return gem
 
     #can only take up to 2 notes
-    def play_notes(self, channel, notes):
-        channel.play(pg.mixer.Sound("./sounds/"+str(notes[0])+".wav"))
+    def play_notes(self, channel, notes, long_note = False):
+        if long_note:
+            path = "./sounds/long/"
+        else:
+            path = "./sounds/short/"
+        channel.play(pg.mixer.Sound(path+str(notes[0])+".wav"))
         if len(notes) > 1:
-            channel.queue(pg.mixer.Sound("./sounds/"+str(notes[1])+".wav"))
+            channel.queue(pg.mixer.Sound(path+str(notes[1])+".wav"))
 
 class SoundDisplay:
     def __init__(self, flag):
@@ -113,6 +137,7 @@ class SoundDisplay:
     def update_text(self, note):
         correct = False
         if len(self.notes) == 0 or len(self.notes) == 2:
+            self.flag.update_status(BLACK)
             self.notes = [note]
         elif len(self.notes) == 1:
             diff = abs(SEMITONE_MAP[note] - SEMITONE_MAP[self.notes[0]])
@@ -122,15 +147,20 @@ class SoundDisplay:
             else:
                 self.flag.update_status(RED)
             self.notes.append(note)
+            self.complete_time = pg.time.get_ticks()
         return correct
 
-    def draw(self, screen):
-        self.draw_peaks(self.signal[0], 0, BRIGHT_GREEN, screen)
-        self.draw_peaks(self.signal[1], 1.5, BRIGHT_GREEN, screen)
+    def draw(self, screen, disrupt):
+        if len(self.notes) == 2 and pg.time.get_ticks() - self.complete_time > 1000:
+            self.flag.update_status(BLACK)
+            self.notes = []
+        if not disrupt:
+            self.draw_peaks(self.signal[0], 0, BLUE, screen)
+            self.draw_peaks(self.signal[1], 1.5, BLUE, screen)
         if len(self.notes) > 0:
-            self.draw_peaks(self.notes[0], 4, RED, screen)
+            self.draw_peaks(self.notes[0], 4, BLUE, screen)
         if len(self.notes) > 1:
-            self.draw_peaks(self.notes[1], 5.5, RED, screen)
+            self.draw_peaks(self.notes[1], 5.5, BLUE, screen)
 
 class ErrorFlag(pg.sprite.Sprite):
     def __init__(self):
@@ -144,3 +174,17 @@ class ErrorFlag(pg.sprite.Sprite):
 
     def update_status(self, color):
         self.image.fill(color)
+
+class TimeRemaining:
+    def __init__(self, total_time):
+        self.total_time = total_time
+        self.remaining_time = total_time
+
+    def draw(self, screen, remaining_time):
+        width = (remaining_time/self.total_time)*370
+        if width > 74:
+            color = GREEN
+        else:
+            color = RED
+        pg.draw.rect(screen, color, pg.Rect(310, 540, width, 20))
+

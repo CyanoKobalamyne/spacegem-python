@@ -259,7 +259,7 @@ class Gem(ImageBlob):
         self.winner = winner
 
         # Get sound for this note.
-        sound_path = os.path.join("sounds", f"{note}.wav")
+        sound_path = os.path.join("sounds", "short", f"{note}.wav")
         self.sound = pygame.mixer.Sound(sound_path)
 
 
