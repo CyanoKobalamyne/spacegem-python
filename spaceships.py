@@ -68,7 +68,7 @@ class Spaceship(pg.sprite.Sprite):
         self.image = get_image("./images/enemy_in_ship.png")
         self.rect = self.image.get_rect()
         self.cycles = 0
-        self.limit = 4
+        self.limit = 5
         self.rect.x = ship["x"] - time/1000*Settings.FPS/self.limit
         self.rect.y = ship["y"]
         self.disrupt = disrupt
