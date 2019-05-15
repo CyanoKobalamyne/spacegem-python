@@ -18,6 +18,10 @@ You can launch the game with the command `python3 game.py`.
 - `setup.py` has general constants that can be adjusted to customize the look and feel of the game
 - `utils.py` has general utility classes like `Scene`, `Vector`, `Button`, and `TextBox`
 - `menus.py` has the machinery for managing scene transitions
-- world 1: code is in `platformer.py`, level specifications are in `world1.py`
-- world 2: code is in `spaceships.py` and `interval.py`, level specifications are in `levels` in pickled (binary) format and which can be changed by running `make-levels.py`
+- **world 1**: code is in `platformer.py`, level specifications are in `world1.py`
+- **world 2**: code is in `spaceships.py` and `interval.py`, level specifications are in `levels` in pickled (binary) format and which can be changed by running `make-levels.py`
 - `narratives.py` contains the intro text displayed at the beginning of the game, each world, and each level
+
+# Cheat codes
+
+- pressing `0` on the title screen unlocks all levels
