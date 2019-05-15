@@ -22,7 +22,7 @@ def main():
     pg.init()
     screen = pg.display.set_mode(
         [Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT])
-    pg.display.set_caption('Test')
+    pg.display.set_caption('Space Gem')
     timer = pg.time.Clock()
     running = True
 
